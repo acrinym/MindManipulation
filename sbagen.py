@@ -8,15 +8,13 @@ a WAV file.  The format implemented here is a subset of the original SBAGEN
 syntax but is compatible with many of the example session files that ship with
 SBAGEN.
 
-
 This code is released under the terms of the GNU General Public License v2.
 """
 
 import argparse
 import os
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
-
+from typing import Dict, List, Tuple, Optional
 import numpy as np
 import soundfile as sf
 
@@ -64,12 +62,51 @@ class FileSpec:
         return data * (self.amp / 100.0)
 
 
+
+@dataclass
+class HarmonicBoxSpec:
+    base: float
+    diff: float
+    mod: float
+    amp: float
+
+    def generate(self, duration: float) -> np.ndarray:
+        t = np.linspace(0, duration, int(SAMPLE_RATE * duration), endpoint=False)
+        phases = [0, np.pi / 2, np.pi, 3 * np.pi / 2]
+        left = np.zeros_like(t)
+        right = np.zeros_like(t)
+        for ph in phases:
+            gate = (np.sin(2 * np.pi * self.mod * t + ph) > 0).astype(np.float32)
+            left += np.sin(2 * np.pi * self.base * t) * gate
+            right += np.sin(2 * np.pi * (self.base + self.diff) * t) * gate
+        out = np.vstack((left, right)).T
+        out *= (self.amp / 100.0) / len(phases)
+        return out
+
+
 ToneGenerator = Tuple[str, List]
 
 
 def parse_tone_component(spec: str):
     if ':' in spec and not spec[0].isdigit():
         # Remove modifiers like spin:, slide:, pure: etc
+        prefix, spec = spec.split(':', 1)
+        if prefix == "iso":
+            if '/' in spec:
+                params, amp = spec.split('/')
+            else:
+                params, amp = spec, '100'
+            freq, beat = [float(x) for x in params.split(',')]
+            return IsochronicSpec(freq, beat, float(amp))
+        if prefix == "hbox":
+            if '/' in spec:
+                params, amp = spec.split('/')
+            else:
+                params, amp = spec, '100'
+            base, diff, mod = [float(x) for x in params.split(',')]
+            return HarmonicBoxSpec(base, diff, mod, float(amp))
+        # fallback for other modifiers
+        spec = spec
         _, spec = spec.split(':', 1)
     if spec.startswith("pink") or spec.startswith("white"):
         _, amp = spec.split("/")
@@ -174,20 +211,45 @@ def main() -> None:
     parser.add_argument("--base", type=float, help="Quick tone base frequency")
     parser.add_argument("--beat", type=float, help="Quick tone beat frequency")
     parser.add_argument("--noise", action="store_true", help="Add white noise to quick tone")
+    parser.add_argument("--isochronic", nargs=2, metavar=("FREQ", "BEAT"), type=float,
+                        help="Generate isochronic tone with base frequency and beat rate")
+    parser.add_argument("--harmonic-box", nargs=3, metavar=("BASE", "DIFF", "MOD"), type=float,
+                        help="Generate Harmonic Box X with base frequency, binaural difference and modulation rate")
+    parser.add_argument("--music", help="Background WAV file to mix")
+    parser.add_argument("--music-amp", type=float, default=100.0, help="Volume percent for background music")
     args = parser.parse_args()
 
     if args.schedule:
         tones, sched = parse_sbg(args.schedule)
         audio = build_session(tones, sched, args.duration)
+        dur = len(audio) / SAMPLE_RATE
+        if args.music:
+            music = FileSpec(args.music, args.music_amp).generate(dur)
+            audio = audio + music[: len(audio)]
     else:
-        if args.base is None or args.beat is None or args.duration is None:
-            parser.error("base, beat and duration required when not using schedule")
-        gens = [ToneSpec(args.base, args.beat, 100.0)]
+        gens: List = []
+        duration = args.duration
+        if args.harmonic_box:
+            base, diff, mod = args.harmonic_box
+            gens.append(HarmonicBoxSpec(base, diff, mod, 100.0))
+        elif args.isochronic:
+            freq, beat = args.isochronic
+            gens.append(IsochronicSpec(freq, beat, 100.0))
+        else:
+            if args.base is None or args.beat is None or args.duration is None:
+                parser.error("base, beat and duration required when not using schedule")
+            gens.append(ToneSpec(args.base, args.beat, 100.0))
         if args.noise:
             gens.append(NoiseSpec(20.0))
-        audio = mix_generators(gens, args.duration)
+        if args.music:
+            gens.append(FileSpec(args.music, args.music_amp))
+        if duration is None:
+            parser.error("duration required")
+        audio = mix_generators(gens, duration)
 
     sf.write(args.outfile, audio, SAMPLE_RATE)
+
+
 
 
 def generate_tone(base_freq: float, beat_freq: float, duration: float) -> np.ndarray:
@@ -217,7 +279,6 @@ def main():
     if args.noise:
         tone += generate_noise(args.duration, 0.2)
     sf.write(args.outfile, tone, SAMPLE_RATE)
-
 
 if __name__ == "__main__":
     main()

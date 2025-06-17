@@ -22,14 +22,19 @@ python sbagen.py --base 200 --beat 10 --duration 120 --outfile tone.wav
 ```
 
 Use `--noise` to mix in white noise for the quick-tone mode.
-A simplified Python version of SBAGEN is provided in `sbagen.py`. It can
-generate basic binaural beat sessions and write them to a WAV file.
 
-Example usage:
+### Advanced Quick Modes
+
+Generate an isochronic tone layered behind music:
 
 ```bash
-python sbagen.py --base 200 --beat 10 --duration 120 --outfile session.wav
+python sbagen.py --isochronic 200 10 --duration 60 --music background.wav \
+  --outfile iso.wav
 ```
 
-Use `--noise` to mix in white noise.
+Generate a Harmonic Box X sequence and mix with music:
 
+```bash
+python sbagen.py --harmonic-box 180 5 8 --duration 120 --music song.wav \
+  --outfile hbox.wav
+```

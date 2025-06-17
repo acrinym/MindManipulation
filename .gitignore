@@ -1,0 +1,7 @@
+# Ignore compiled binaries and temporary files
+sbagen-1.4.5/sbagen-1.4.5/sbagen
+sbagen-1.4.5/sbagen-1.4.5/*.o
+sbagen-1.4.5/sbagen-1.4.5/*.exe
+sbagen-1.4.5/sbagen-1.4.5/*.tar
+__pycache__/
+*.wav

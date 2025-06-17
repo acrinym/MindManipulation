@@ -37,4 +37,4 @@ Generate a Harmonic Box X sequence and mix with music:
 ```bash
 python sbagen.py --harmonic-box 180 5 8 --duration 120 --music song.wav \
   --outfile hbox.wav
-```
+

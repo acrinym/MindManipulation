@@ -1,1 +1,4 @@
-Wrote 5.00s to ogg_test_output.wav
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pydub/utils.py:170: RuntimeWarning: Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work
+  warn("Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work", RuntimeWarning)
+Generating audio and visualization...
+Final test complete.

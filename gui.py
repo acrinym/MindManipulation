@@ -4,6 +4,11 @@ import argparse
 import sbagen
 import soundfile as sf
 import numpy as np
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import visualization as viz
+import pyaudio
+import threading
 
 from pydub import AudioSegment
 
@@ -43,6 +48,25 @@ class SbagenController:
         except Exception as e:
             return f"An unexpected error occurred: {e}"
 
+    def generate_with_viz(self, params):
+        if params.get("ffmpeg_path"):
+            AudioSegment.converter = params["ffmpeg_path"]
+
+        args = argparse.Namespace(
+            schedule=params.get("schedule"),
+            outfile=params.get("outfile", "session.wav"),
+            duration=float(params.get("duration", 60)),
+            base=float(params.get("base", 0)),
+            beat=float(params.get("beat", 0)),
+            noise=params.get("noise"),
+            isochronic=params.get("isochronic"),
+            harmonic_box=params.get("harmonic_box"),
+            music=params.get("music"),
+            music_amp=float(params.get("music_amp", 100.0))
+        )
+
+        yield from sbagen.generate_audio_and_viz(args)
+
 class SbagenGui:
     def __init__(self, root):
         self.controller = SbagenController()
@@ -58,10 +82,12 @@ class SbagenGui:
         quick_tab = ttk.Frame(notebook)
         schedule_tab = ttk.Frame(notebook)
         advanced_tab = ttk.Frame(notebook)
+        self.viz_tab = ttk.Frame(notebook)
 
         notebook.add(quick_tab, text="Quick Generate")
         notebook.add(schedule_tab, text="Schedule File")
         notebook.add(advanced_tab, text="Advanced")
+        notebook.add(self.viz_tab, text="Visualization")
 
         # --- Quick Generate Tab ---
         # Input fields
@@ -131,6 +157,15 @@ class SbagenGui:
         advanced_generate_button = ttk.Button(advanced_tab, text="Generate Advanced", command=self.run_generate_advanced)
         advanced_generate_button.pack(pady=10)
 
+        # --- Visualization Tab ---
+        self.fig = Figure(figsize=(5, 5), dpi=100)
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self.viz_tab)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        viz_button = ttk.Button(self.viz_tab, text="Play with Visualization", command=self.run_generate_and_viz)
+        viz_button.pack(pady=10)
+
         # Status bar
         self.status = tk.StringVar()
         self.status.set("Ready")
@@ -181,6 +216,55 @@ class SbagenGui:
             messagebox.showerror("Error", result)
         else:
             messagebox.showinfo("Success", result)
+
+    def run_generate_and_viz(self):
+        self.status.set("Starting visualization thread...")
+        thread = threading.Thread(target=self._generate_and_viz_thread)
+        thread.daemon = True
+        thread.start()
+
+    def _generate_and_viz_thread(self):
+        p = pyaudio.PyAudio()
+        stream = p.open(format=pyaudio.paFloat32,
+                        channels=2,
+                        rate=sbagen.SAMPLE_RATE,
+                        output=True)
+
+        params = {
+            "duration": self.duration.get(),
+            "outfile": self.outfile.get(),
+            "isochronic": (float(self.iso_freq.get()), float(self.iso_beat.get())),
+            "harmonic_box": (float(self.hbox_base.get()), float(self.hbox_diff.get()), float(self.hbox_mod.get())),
+            "music": self.music_file.get() if self.music_file.get() != "No file selected." else None,
+            "music_amp": self.music_amp.get(),
+            "ffmpeg_path": self.ffmpeg_path.get(),
+            "noise": float(self.noise_amp.get()) if self.noise_amp.get() else None
+        }
+
+        try:
+            for chunk, info in self.controller.generate_with_viz(params):
+                stream.write(chunk.astype(np.float32).tobytes())
+
+                # Map the frequency to (n, m) parameters
+                if info and info[0]['type'] == 'isochronic':
+                    freq = info[0]['freq']
+                    n, m = viz.map_freq_to_params(freq)
+
+                    self.fig.clear()
+                    new_fig = viz.generate_chladni_pattern(n, m)
+                    self.canvas.figure = new_fig
+                    self.canvas.draw()
+
+            self.status.set("Visualization complete.")
+        except Exception as e:
+            self.status.set(f"Error: {e}")
+            # Since this is in a thread, messagebox will not work well.
+            # We will just print the error for now.
+            print(f"Error in visualization thread: {e}")
+        finally:
+            stream.stop_stream()
+            stream.close()
+            p.terminate()
 
     def browse_file(self):
         from tkinter import filedialog

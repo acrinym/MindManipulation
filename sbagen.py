@@ -50,6 +50,8 @@ class NoiseSpec:
         return np.random.normal(scale=self.amp / 100.0, size=(int(SAMPLE_RATE * duration), 2))
 
 
+from pydub import AudioSegment
+
 @dataclass
 class FileSpec:
     """Represents a sound file to be mixed."""
@@ -57,12 +59,23 @@ class FileSpec:
     amp: float
 
     def generate(self, duration: float) -> np.ndarray:
-        data, rate = sf.read(self.path)
-        if rate != SAMPLE_RATE:
-            # A more advanced version could resample here.
-            raise ValueError(f"Sample rate mismatch for {self.path}: file is {rate}Hz, need {SAMPLE_RATE}Hz")
-        if data.ndim == 1:
-            data = np.stack([data, data], axis=1) # convert mono to stereo
+        if self.path.lower().endswith(".mp3"):
+            audio = AudioSegment.from_mp3(self.path)
+            if audio.frame_rate != SAMPLE_RATE:
+                audio = audio.set_frame_rate(SAMPLE_RATE)
+            if audio.channels == 1:
+                audio = audio.set_channels(2)
+            # Convert to numpy array
+            data = np.array(audio.get_array_of_samples()).reshape(-1, 2)
+            # Normalize to float
+            data = data / (2**(audio.sample_width * 8 - 1))
+        else:
+            data, rate = sf.read(self.path)
+            if rate != SAMPLE_RATE:
+                # A more advanced version could resample here.
+                raise ValueError(f"Sample rate mismatch for {self.path}: file is {rate}Hz, need {SAMPLE_RATE}Hz")
+            if data.ndim == 1:
+                data = np.stack([data, data], axis=1) # convert mono to stereo
         
         num_samples = int(duration * SAMPLE_RATE)
         if len(data) < num_samples:
@@ -287,32 +300,12 @@ def build_session(tone_sets: Dict[str, List[AnySpec]], schedule: List[Tuple[floa
     return np.vstack(output)
 
 
-def main() -> None:
-    """Main function to parse arguments and generate the audio file."""
-    parser = argparse.ArgumentParser(description="SBAGEN compatible binaural beat generator")
-    parser.add_argument("schedule", nargs="?", help=".sbg schedule file to process")
-    parser.add_argument("-o", "--outfile", required=True, help="Output WAV file")
-    parser.add_argument("-d", "--duration", type=float, help="Override total session duration in seconds")
-    
-    # Quick-generate options (if no schedule file is provided)
-    parser.add_argument("--base", type=float, help="Quick tone: base frequency (e.g., 200)")
-    parser.add_argument("--beat", type=float, help="Quick tone: beat frequency (e.g., 10)")
-    parser.add_argument("--noise", type=float, metavar="AMP", help="Quick tone: add white noise with amplitude (0-100)")
-    parser.add_argument("--isochronic", nargs=2, metavar=("FREQ", "BEAT"), type=float,
-                        help="Quick tone: generate an isochronic tone")
-    parser.add_argument("--harmonic-box", nargs=3, metavar=("BASE", "DIFF", "MOD"), type=float,
-                        help="Quick tone: generate a Harmonic Box X tone")
-    
-    # Background music options
-    parser.add_argument("--music", help="Background WAV file to mix in")
-    parser.add_argument("--music-amp", type=float, default=100.0, help="Volume percent for background music (0-100)")
-    
-    args = parser.parse_args()
-
+def generate_audio(args: argparse.Namespace) -> Optional[np.ndarray]:
+    """Generates audio based on command line arguments, returns the raw audio data."""
     audio = None
     if args.schedule:
         if not os.path.exists(args.schedule):
-            parser.error(f"Schedule file not found: {args.schedule}")
+            raise FileNotFoundError(f"Schedule file not found: {args.schedule}")
         tones, sched = parse_sbg(args.schedule)
         audio = build_session(tones, sched, args.duration)
         
@@ -325,7 +318,7 @@ def main() -> None:
     else:
         # Handle quick-generate options
         if args.duration is None:
-            parser.error("--duration is required when not using a schedule file.")
+            raise ValueError("--duration is required when not using a schedule file.")
         
         gens: List[AnySpec] = []
         if args.harmonic_box:
@@ -343,20 +336,49 @@ def main() -> None:
             gens.append(FileSpec(args.music, args.music_amp))
             
         if not gens:
-            parser.error("You must specify a tone to generate (e.g., --base and --beat) if not using a schedule.")
+            raise ValueError("You must specify a tone to generate (e.g., --base and --beat) if not using a schedule.")
             
         audio = mix_generators(gens, args.duration)
 
-    if audio is not None:
-        print(f"Writing {len(audio) / SAMPLE_RATE:.2f} seconds of audio to {args.outfile}...")
-        # Normalize to prevent clipping before writing
-        max_val = np.max(np.abs(audio))
-        if max_val > 1.0:
-            audio /= max_val
-        sf.write(args.outfile, audio, SAMPLE_RATE)
-        print("Done.")
-    else:
-        print("No audio generated.")
+    return audio
+
+def main() -> None:
+    """Main function to parse arguments and generate the audio file."""
+    parser = argparse.ArgumentParser(description="SBAGEN compatible binaural beat generator")
+    parser.add_argument("schedule", nargs="?", help=".sbg schedule file to process")
+    parser.add_argument("-o", "--outfile", required=True, help="Output WAV file")
+    parser.add_argument("-d", "--duration", type=float, help="Override total session duration in seconds")
+
+    # Quick-generate options (if no schedule file is provided)
+    parser.add_argument("--base", type=float, help="Quick tone: base frequency (e.g., 200)")
+    parser.add_argument("--beat", type=float, help="Quick tone: beat frequency (e.g., 10)")
+    parser.add_argument("--noise", type=float, metavar="AMP", help="Quick tone: add white noise with amplitude (0-100)")
+    parser.add_argument("--isochronic", nargs=2, metavar=("FREQ", "BEAT"), type=float,
+                        help="Quick tone: generate an isochronic tone")
+    parser.add_argument("--harmonic-box", nargs=3, metavar=("BASE", "DIFF", "MOD"), type=float,
+                        help="Quick tone: generate a Harmonic Box X tone")
+
+    # Background music options
+    parser.add_argument("--music", help="Background WAV file to mix in")
+    parser.add_argument("--music-amp", type=float, default=100.0, help="Volume percent for background music (0-100)")
+
+    args = parser.parse_args()
+
+    try:
+        audio = generate_audio(args)
+        if audio is not None:
+            print(f"Writing {len(audio) / SAMPLE_RATE:.2f} seconds of audio to {args.outfile}...")
+            # Normalize to prevent clipping before writing
+            max_val = np.max(np.abs(audio))
+            if max_val > 1.0:
+                audio /= max_val
+            sf.write(args.outfile, audio, SAMPLE_RATE)
+            print("Done.")
+        else:
+            print("No audio generated.")
+    except (FileNotFoundError, ValueError) as e:
+        parser.error(str(e))
+
 
 if __name__ == "__main__":
     main()

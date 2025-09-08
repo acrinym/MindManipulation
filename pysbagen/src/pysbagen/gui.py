@@ -1,14 +1,14 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import argparse
-from pysbagen import cli as pysbagen_cli
-from pysbagen.mixer import mix_generators
-from pysbagen.generators.generic import GenericToneSpec
-from pysbagen.parser import parse_sbg_from_string
-import visualization as viz
+from . import cli as pysbagen_cli
+from .mixer import mix_generators
+from .generators.generic import GenericToneSpec
+from .parser import parse_sbg_from_string
+from . import visualization as viz
 import pyaudio
 import threading
-import drg_decoder
+from . import drg_decoder
 from PIL import Image, ImageTk
 import io
 

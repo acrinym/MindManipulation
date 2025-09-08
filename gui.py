@@ -1,77 +1,86 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import argparse
-import sbagen
-import soundfile as sf
-import numpy as np
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from pysbagen import cli as pysbagen_cli
+from pysbagen.mixer import mix_generators
+from pysbagen.generators.generic import GenericToneSpec
+from pysbagen.parser import parse_sbg_from_string
 import visualization as viz
 import pyaudio
 import threading
-
-from pydub import AudioSegment
+import drg_decoder
+from PIL import Image, ImageTk
+import io
 
 class SbagenController:
     def generate(self, params):
         try:
-            if params.get("ffmpeg_path"):
-                AudioSegment.converter = params["ffmpeg_path"]
+            # This is a bit of a hack to reuse the CLI parser
+            # A better solution would be to have a proper API
+            args = []
+            if params.get("outfile"):
+                args.extend(["-o", params["outfile"]])
+            if params.get("duration"):
+                args.extend(["-d", str(params["duration"])])
+            if params.get("base") and params.get("beat"):
+                args.extend(["--base", str(params["base"]), "--beat", str(params["beat"])])
+            if params.get("isochronic"):
+                args.extend(["--isochronic", str(params["isochronic"][0]), str(params["isochronic"][1])])
+            if params.get("harmonic_box"):
+                args.extend(["--harmonic-box", str(params["harmonic_box"][0]), str(params["harmonic_box"][1]), str(params["harmonic_box"][2])])
+            if params.get("noise"):
+                args.extend(["--noise", str(params["noise"])])
+            if params.get("music"):
+                args.extend(["--music", params["music"]])
+            if params.get("music_amp"):
+                args.extend(["--music-amp", str(params["music_amp"])])
+            if params.get("schedule"):
+                args.append(params["schedule"])
 
-            args = argparse.Namespace(
-                schedule=params.get("schedule"),
-                outfile=params.get("outfile", "session.wav"),
-                duration=float(params.get("duration", 60)),
-                base=float(params.get("base", 0)),
-                beat=float(params.get("beat", 0)),
-                noise=params.get("noise"),
-                isochronic=params.get("isochronic"),
-                harmonic_box=params.get("harmonic_box"),
-                music=params.get("music"),
-                music_amp=float(params.get("music_amp", 100.0))
-            )
+            # We need to temporarily replace sys.argv to use the parser
+            import sys
+            original_argv = sys.argv
+            sys.argv = ["sbgpy"] + args
+            pysbagen_cli.main()
+            sys.argv = original_argv
 
-            audio = sbagen.generate_audio(args)
+            return f"Successfully generated {params.get('outfile', 'session.wav')}"
 
-            if audio is not None:
-                # Normalize to prevent clipping before writing
-                max_val = np.max(np.abs(audio))
-                if max_val > 1.0:
-                    audio /= max_val
-                sf.write(args.outfile, audio, sbagen.SAMPLE_RATE)
-                return f"Wrote {len(audio) / sbagen.SAMPLE_RATE:.2f}s to {args.outfile}"
-            else:
-                return "No audio generated."
-
-        except (ValueError, FileNotFoundError) as e:
-            return f"Error: {e}"
         except Exception as e:
             return f"An unexpected error occurred: {e}"
 
     def generate_with_viz(self, params):
-        if params.get("ffmpeg_path"):
-            AudioSegment.converter = params["ffmpeg_path"]
+        # This is also a hack. A proper API would be better.
+        gens = []
+        if params.get("isochronic"):
+            gens.append(GenericToneSpec(freq=params["isochronic"][0], amp=100.0, waveform="sine"))
 
-        args = argparse.Namespace(
-            schedule=params.get("schedule"),
-            outfile=params.get("outfile", "session.wav"),
-            duration=float(params.get("duration", 60)),
-            base=float(params.get("base", 0)),
-            beat=float(params.get("beat", 0)),
-            noise=params.get("noise"),
-            isochronic=params.get("isochronic"),
-            harmonic_box=params.get("harmonic_box"),
-            music=params.get("music"),
-            music_amp=float(params.get("music_amp", 100.0))
-        )
+        yield from mix_generators(gens, params["duration"])
 
-        yield from sbagen.generate_audio_and_viz(args)
+
+    def generate_tones(self, specs, duration):
+        gens = []
+        for spec in specs:
+            gens.append(GenericToneSpec(
+                freq=spec["freq"],
+                amp=spec["amp"],
+                waveform=spec["waveform"]
+            ))
+        yield from mix_generators(gens, duration)
 
 class SbagenGui:
     def __init__(self, root):
         self.controller = SbagenController()
         self.root = root
         root.title("SBAGEN GUI")
+
+        menubar = tk.Menu(root)
+        filemenu = tk.Menu(menubar, tearoff=0)
+        filemenu.add_command(label="Open I-Doser file...", command=self.open_drg_file)
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit", command=root.quit)
+        menubar.add_cascade(label="File", menu=filemenu)
+        root.config(menu=menubar)
 
         main_label = ttk.Label(root, text="SBAGEN GUI", font=("Helvetica", 16))
         main_label.pack(pady=10)
@@ -83,11 +92,13 @@ class SbagenGui:
         schedule_tab = ttk.Frame(notebook)
         advanced_tab = ttk.Frame(notebook)
         self.viz_tab = ttk.Frame(notebook)
+        tone_gen_tab = ttk.Frame(notebook)
 
         notebook.add(quick_tab, text="Quick Generate")
         notebook.add(schedule_tab, text="Schedule File")
         notebook.add(advanced_tab, text="Advanced")
         notebook.add(self.viz_tab, text="Visualization")
+        notebook.add(tone_gen_tab, text="Tone Generator")
 
         # --- Quick Generate Tab ---
         # Input fields
@@ -101,6 +112,8 @@ class SbagenGui:
         generate_button.pack(pady=5)
 
         # --- Schedule File Tab ---
+        self.image_label = ttk.Label(schedule_tab)
+        self.image_label.pack(pady=5)
         self.schedule_file = tk.StringVar()
         schedule_label = ttk.Label(schedule_tab, textvariable=self.schedule_file)
         schedule_label.pack(side="left", fill="x", expand=True, padx=5, pady=5)
@@ -156,6 +169,37 @@ class SbagenGui:
 
         advanced_generate_button = ttk.Button(advanced_tab, text="Generate Advanced", command=self.run_generate_advanced)
         advanced_generate_button.pack(pady=10)
+
+        # --- Tone Generator Tab ---
+        self.tone_generators = []
+        self.tone_canvas = tk.Canvas(tone_gen_tab)
+        self.tone_frame = ttk.Frame(self.tone_canvas)
+        self.tone_scrollbar = ttk.Scrollbar(tone_gen_tab, orient="vertical", command=self.tone_canvas.yview)
+        self.tone_canvas.configure(yscrollcommand=self.tone_scrollbar.set)
+
+        self.tone_scrollbar.pack(side="right", fill="y")
+        self.tone_canvas.pack(side="left", fill="both", expand=True)
+        self.tone_canvas.create_window((0,0), window=self.tone_frame, anchor="nw")
+
+        self.tone_frame.bind("<Configure>", lambda e: self.tone_canvas.configure(scrollregion=self.tone_canvas.bbox("all")))
+
+        soundscape_frame = ttk.LabelFrame(tone_gen_tab, text="Background Soundscape")
+        soundscape_frame.pack(padx=10, pady=10, fill="x")
+        self.soundscape_file = tk.StringVar()
+        soundscape_label = ttk.Label(soundscape_frame, textvariable=self.soundscape_file)
+        soundscape_label.pack(side="left", fill="x", expand=True, padx=5, pady=5)
+        self.soundscape_file.set("No file selected.")
+        load_soundscape_button = ttk.Button(soundscape_frame, text="Load...", command=self.load_soundscape)
+        load_soundscape_button.pack(side="left", padx=5)
+        self.soundscape_amp = tk.Scale(soundscape_frame, from_=0, to=100, orient="horizontal", label="Volume (%)")
+        self.soundscape_amp.set(50)
+        self.soundscape_amp.pack(side="left", padx=5)
+
+        add_tone_button = ttk.Button(tone_gen_tab, text="Add Tone", command=self.add_tone_generator)
+        add_tone_button.pack(pady=5)
+
+        generate_tones_button = ttk.Button(tone_gen_tab, text="Generate Tones", command=self.run_generate_tones)
+        generate_tones_button.pack(pady=5)
 
         # --- Visualization Tab ---
         self.fig = Figure(figsize=(5, 5), dpi=100)
@@ -227,11 +271,11 @@ class SbagenGui:
         p = pyaudio.PyAudio()
         stream = p.open(format=pyaudio.paFloat32,
                         channels=2,
-                        rate=sbagen.SAMPLE_RATE,
+                        rate=44100, # Use constant
                         output=True)
 
         params = {
-            "duration": self.duration.get(),
+            "duration": float(self.duration.get()),
             "outfile": self.outfile.get(),
             "isochronic": (float(self.iso_freq.get()), float(self.iso_beat.get())),
             "harmonic_box": (float(self.hbox_base.get()), float(self.hbox_diff.get()), float(self.hbox_mod.get())),
@@ -290,6 +334,132 @@ class SbagenGui:
         if filepath:
             self.ffmpeg_path.delete(0, tk.END)
             self.ffmpeg_path.insert(0, filepath)
+
+    def open_drg_file(self):
+        from tkinter import filedialog
+        filepath = filedialog.askopenfilename(
+            title="Select an I-Doser file",
+            filetypes=(("I-Doser files", "*.drg"), ("All files", "*.*"))
+        )
+        if not filepath:
+            return
+
+        try:
+            sbg_string, image_data = drg_decoder.decode_drg(filepath)
+            tones, sched = parse_sbg_from_string(sbg_string)
+
+            if image_data:
+                image = Image.open(io.BytesIO(image_data))
+                photo = ImageTk.PhotoImage(image)
+                self.image_label.config(image=photo)
+                self.image_label.image = photo # Keep a reference
+            else:
+                self.image_label.config(image="")
+                self.image_label.image = None
+
+            # For now, just print the parsed data
+            print("Successfully parsed .drg file:")
+            print("Tones:", tones)
+            print("Schedule:", sched)
+            self.status.set(f"Successfully parsed {filepath}")
+        except Exception as e:
+            self.status.set(f"Error parsing .drg file: {e}")
+            messagebox.showerror("Error", f"Could not parse .drg file: {e}")
+
+    def add_tone_generator(self):
+        frame = ttk.Frame(self.tone_frame, padding=5, relief="groove", borderwidth=2)
+        frame.pack(fill="x", pady=5)
+
+        tone_num = len(self.tone_generators) + 1
+        label = ttk.Label(frame, text=f"Tone {tone_num}")
+        label.pack()
+
+        freq_slider = tk.Scale(frame, from_=20, to=1000, orient="horizontal", label="Frequency (Hz)")
+        freq_slider.set(200)
+        freq_slider.pack(fill="x")
+
+        amp_slider = tk.Scale(frame, from_=0, to=100, orient="horizontal", label="Amplitude (%)")
+        amp_slider.set(50)
+        amp_slider.pack(fill="x")
+
+        waveform = tk.StringVar(frame)
+        waveform.set("sine")
+        waveform_menu = ttk.OptionMenu(frame, waveform, "sine", "square", "triangle", "sawtooth")
+        waveform_menu.pack()
+
+        remove_button = ttk.Button(frame, text="Remove", command=lambda: self.remove_tone_generator(frame))
+        remove_button.pack()
+
+        self.tone_generators.append({
+            "frame": frame,
+            "freq": freq_slider,
+            "amp": amp_slider,
+            "waveform": waveform
+        })
+
+    def run_generate_tones(self):
+        self.status.set("Generating tones...")
+
+        specs = []
+        for gen in self.tone_generators:
+            spec = {
+                "freq": gen["freq"].get(),
+                "amp": gen["amp"].get(),
+                "waveform": gen["waveform"].get()
+            }
+            specs.append(spec)
+
+        if not specs:
+            self.status.set("No tones to generate.")
+            return
+
+        thread = threading.Thread(target=self._generate_tones_thread, args=(specs,))
+        thread.daemon = True
+        thread.start()
+
+    def _generate_tones_thread(self, specs):
+        # This is a simplified version of the viz thread for now
+        # It just plays the audio without visualization
+        p = pyaudio.PyAudio()
+        stream = p.open(format=pyaudio.paFloat32,
+                        channels=2,
+                        rate=44100, # Use constant
+                        output=True)
+
+        try:
+            # Duration is fixed for now
+            duration = 10
+            generator = self.controller.generate_tones(specs, duration)
+
+            soundscape_path = self.soundscape_file.get()
+            if soundscape_path and soundscape_path != "No file selected.":
+                soundscape_amp = self.soundscape_amp.get()
+                soundscape_spec = pysbagen.generators.file.FileSpec(soundscape_path, soundscape_amp)
+                soundscape_gen = soundscape_spec.generator(duration, loop=True)
+
+                for chunk, info in generator:
+                    soundscape_chunk, _ = next(soundscape_gen)
+                    mixed_chunk = chunk + soundscape_chunk
+                    stream.write(mixed_chunk.astype(np.float32).tobytes())
+            else:
+                for chunk, info in generator:
+                    stream.write(chunk.astype(np.float32).tobytes())
+
+            self.status.set("Tone generation complete.")
+        except Exception as e:
+            self.status.set(f"Error: {e}")
+            print(f"Error in tone generation thread: {e}")
+        finally:
+            stream.stop_stream()
+            stream.close()
+            p.terminate()
+
+    def remove_tone_generator(self, frame):
+        for i, gen in enumerate(self.tone_generators):
+            if gen["frame"] == frame:
+                gen["frame"].destroy()
+                self.tone_generators.pop(i)
+                break
 
     def run_generate_from_schedule(self):
         filepath = self.schedule_file.get()

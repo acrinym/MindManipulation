@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pysbagen"
+version = "0.1.0"
+description = "Modern Python reimplementation of SBaGen with plugin generators"
+readme = "README.md"
+license = {text = "GPL-2.0-only"}
+authors = [{name="Justin (acrinym)"}]
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.26",
+  "soundfile>=0.12",
+  "pydub>=0.25",
+  "scipy>=1.13"      # for resampling & pink noise filter
+]
+
+[project.scripts]
+sbgpy = "pysbagen.cli:main"
+
+[project.entry-points."pysbagen.generators"]
+# third-parties can add theirs here by defining the same group

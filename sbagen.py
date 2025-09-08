@@ -63,7 +63,7 @@ class FileSpec:
             raise ValueError(f"Sample rate mismatch for {self.path}: file is {rate}Hz, need {SAMPLE_RATE}Hz")
         if data.ndim == 1:
             data = np.stack([data, data], axis=1) # convert mono to stereo
-        
+
         num_samples = int(duration * SAMPLE_RATE)
         if len(data) < num_samples:
             # Tile the audio if it's shorter than the required duration
@@ -230,7 +230,7 @@ def build_session(tone_sets: Dict[str, List[AnySpec]], schedule: List[Tuple[floa
 
     segments = []
     times = [t for t, _ in schedule]
-    
+
     if duration is None:
         duration = times[-1]
 
@@ -283,7 +283,7 @@ def build_session(tone_sets: Dict[str, List[AnySpec]], schedule: List[Tuple[floa
             output.append(seg[fade_len:])
         else:
             output.append(seg)
-    
+
     return np.vstack(output)
 
 
@@ -293,7 +293,7 @@ def main() -> None:
     parser.add_argument("schedule", nargs="?", help=".sbg schedule file to process")
     parser.add_argument("-o", "--outfile", required=True, help="Output WAV file")
     parser.add_argument("-d", "--duration", type=float, help="Override total session duration in seconds")
-    
+
     # Quick-generate options (if no schedule file is provided)
     parser.add_argument("--base", type=float, help="Quick tone: base frequency (e.g., 200)")
     parser.add_argument("--beat", type=float, help="Quick tone: beat frequency (e.g., 10)")
@@ -302,11 +302,11 @@ def main() -> None:
                         help="Quick tone: generate an isochronic tone")
     parser.add_argument("--harmonic-box", nargs=3, metavar=("BASE", "DIFF", "MOD"), type=float,
                         help="Quick tone: generate a Harmonic Box X tone")
-    
+
     # Background music options
     parser.add_argument("--music", help="Background WAV file to mix in")
     parser.add_argument("--music-amp", type=float, default=100.0, help="Volume percent for background music (0-100)")
-    
+
     args = parser.parse_args()
 
     audio = None
@@ -315,7 +315,7 @@ def main() -> None:
             parser.error(f"Schedule file not found: {args.schedule}")
         tones, sched = parse_sbg(args.schedule)
         audio = build_session(tones, sched, args.duration)
-        
+
         # Mix in background music if provided
         if args.music:
             dur = len(audio) / SAMPLE_RATE

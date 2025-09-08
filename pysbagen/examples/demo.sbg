@@ -1,0 +1,8 @@
+# Simple session
+alpha: 200+10/60 white/5
+focus: iso:440,7/70 pink/4
+music: mypad.wav/40
+
+NOW alpha
+0:02 alpha -> focus + music
+0:05 alloff

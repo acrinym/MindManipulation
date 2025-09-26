@@ -1,30 +1,41 @@
-from typing import List, Generator, Tuple
+from typing import Generator, Iterable, List, Tuple
 import numpy as np
 
 FRAME = 1024
 SR = 44100
 
-def mix_generators(gens, duration: float) -> Generator[Tuple[np.ndarray, list], None, None]:
+def _pad_chunk(chunk: np.ndarray, frame_len: int) -> np.ndarray:
+    """Pad a chunk to ``frame_len`` without modifying the input."""
+    if chunk.shape[0] == frame_len:
+        return chunk
+    padded = np.zeros((frame_len, chunk.shape[1]), dtype=chunk.dtype)
+    padded[: chunk.shape[0]] = chunk
+    return padded
+
+
+def mix_generators(gens: Iterable, duration: float) -> Generator[Tuple[np.ndarray, list], None, None]:
     if not gens or duration <= 0:
         return
+
     streams = [g.generator(duration) for g in gens]
     while True:
         try:
-            acc = np.zeros((FRAME, 2), dtype=np.float32)
-            infos = []
-            for st in streams:
-                chunk, info = next(st)
-                if len(chunk) < len(acc):
-                    tmp = np.zeros_like(acc)
-                    tmp[:len(chunk)] = chunk
-                    acc += tmp
-                else:
-                    acc += chunk
+            chunks: List[np.ndarray] = []
+            infos: List[dict] = []
+            for stream in streams:
+                chunk, info = next(stream)
+                chunks.append(chunk)
                 infos.append(info)
-            # simple limiter (soft clip)
-            peak = np.max(np.abs(acc))
+
+            frame_len = max(chunk.shape[0] for chunk in chunks)
+            acc = np.zeros((frame_len, 2), dtype=np.float32)
+            for chunk in chunks:
+                acc += _pad_chunk(chunk.astype(np.float32), frame_len)
+
+            peak = float(np.max(np.abs(acc)))
             if peak > 1.0:
                 acc /= peak
+
             yield acc, infos
         except StopIteration:
             break

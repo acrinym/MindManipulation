@@ -37,7 +37,7 @@ python -m pip install -e ".[gui]"
 
 PyAudio can require an operating-system audio package or compiler toolchain. File generation does **not** depend on PyAudio; the GUI still opens and exports audio when live playback is unavailable.
 
-MP3 input uses `pydub` and normally requires FFmpeg to be installed and discoverable on the system path. WAV, OGG, FLAC, and AIFF input use `soundfile` directly.
+MP3 input is decoded directly through FFmpeg, which must be installed and discoverable on the system path. WAV, OGG, FLAC, and AIFF input use `soundfile` directly.
 
 ## Quick CLI generation
 

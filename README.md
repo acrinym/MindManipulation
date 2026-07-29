@@ -2,14 +2,14 @@
 
 PySbagen is a local layered-audio product with two front doors:
 
-- **Sleep Guide** â€” answer ordinary questions and receive a matched, gradually fading audio journey;
-- **Advanced Studio** â€” build SBaGen schedules, binaural, monaural, isochronic, Harmonic Box X-style, noise, music, I-Doser, and visualization sessions.
+- **Sleep Guide**: answer ordinary questions and receive a matched, gradually fading audio journey.
+- **Advanced Studio**: build SBaGen schedules, binaural, monaural, isochronic, Harmonic Box X-style, noise, music, I-Doser, and visualization sessions.
 
 Its first complete human use case is sleep difficulty:
 
-- â€œMy mind will not stop.â€
-- â€œI feel relaxed, but cannot cross into sleep.â€
-- â€œI fall asleep, then keep waking back up.â€
+- "My mind will not stop."
+- "I feel relaxed, but cannot cross into sleep."
+- "I fall asleep, then keep waking back up."
 
 ## Install
 
@@ -25,26 +25,155 @@ Export-capable desktop interfaces:
 python -m pip install -e ".[gui]"
 ```
 
-Immediate playback:B‚˜˜\Úœ]Ûˆ[H\[œÝ[YH‹–Ü^X˜XÚ×H‚˜‚‘[\ÚÝÜÙ]\‚‚˜˜\Úœ]Ûˆ[H\[œÝ[YH‹–Ù\ÚÝÜH‚˜‚‘›Üˆ]™[ÜY[‚‚˜˜\Úœ]Ûˆ[H\[œÝ[YH‹–Ù]—H‚œ]\Ý˜‚”P]Y[ÈX^H™\]Z\™HÜ\˜][™Ë\Þ\Ý[H]Y[ÈXÚØYÙ\Ëˆ^Ü™[XZ[œÈ]˜Z[X›HÚ]Ý]]ˆÛÝ[™š[H[™\ÈÛÛ[[Ûˆ›Ü›X]ÎÈ‘›\YÈ\ÈHœ›ØYÝ™X[Z[™È˜[˜XÚÈ›ÜˆÝ\ˆØØ[HXÛÙX›H›Ü›X]Ë‚‚ˆÈÈÛY\ÝZYB‚˜˜\ÚœØ™ÜK\ÛY\YÝZB˜‚“ÜŽ‚‚˜˜\ÚœØ™ÜK\ÛY\œØ™ÜK\ÛY\K\^B˜‚•HÝZYH\ÚÜÈÚ]\È\[š[™ËÚXÚÛÝ[™ÛÜ›™Y[ÈÛ\˜X›KÝÈ™\Ù[HY[ˆ^Y\œÈÚÝ[™K[™ÝÈÛ™ÈH›Ý\›™^HÚÝ[™[XZ[‹‚‚’]ÚÛÜÙ\È[[Û™Î‚‚‹H
-Š”˜XÚ[™ÈZ[™\ØÙ[
-Šˆ8 %[Ü™H[š]X[[Ý™[Y[[™HÛ™È™YXÝ[Ûˆ[ˆ›Ý™[NÂ‹H
-ŠÜ›ÜÜÚ[™ÈH™\ÚÛ
-Šˆ8 %]ZY]\ˆ\ØÙ[›ÜˆÛÛY[Û™H[™XYH™[^YÂ‹H
-Š”Ý^KP\ÛY\Ý\Ü
-Šˆ8 %ÚÜ\ˆ\ØÙ[[™Û™Ù\ˆÝX›HÝ\Ü‚‚‘]™\žH›Ý]HÛÛZ[œÈ
-Š”ÛY\\ØÙ[
-Šˆ[™
-Š”ÛY\Ý\Ü
-Š‹ˆHÝ\œ™[˜[œÚ][Ûˆ\È[›™YžH[YKˆÙ[œÛÜˆ[YÜ˜][Ûˆ\ÈØÝ[Y[Y]\™HÛÜšÈ[™\È[[[Û˜[H›Ý™Y[ˆÚ\™YÈ›Û™^\Ý[\™Ø\™HÜˆ[™Ú[Ë‚‚‘Ù[™\˜]YÛÝ[™ÛÜ›È[˜ÛYHØ\›H[XšY[˜ÙKÛÝÈšYÚ]\ÚXËH˜Z[‹[ZÙH›ÛÛK[™HY\[šYÚ[š\›Û›Y[ˆ\Ù\‹\›ÝšYY]Y[È\È[ÛÈÝ\ÜY[ˆœ›ØYHXÛÙX›H›Ü›X]È[™Ý™X[\È[ˆ›Ý[™YÚ[šÜË‚‚•[™\›Z[™Èš[˜]\˜[[Û˜]\˜[\ÛØÚ›ÛšXË[™\›[ÛšXÈ›Þ\Ý[H^Y\œÈ\™H[™\[™[HÙ[XÝX›KÚ[™ÙHÝ™\ˆ[YK[™™XÙYH\š[™ÈÝ\ÜˆØ]™Y›Ý\›™^\È[˜ÛYH[ˆ^XÝœÛY\šœÛÛ˜™XÚ\K‚‚”ÙYHØÜËÔÓQTÑÕRQK›Y[™ØÜËÜ™\ÙX\˜ÚÔÓQTÐUQS×Ô‘TÑPTÒÑ“ÕS‘USÓ”Ë›Y‚‚ˆÈÈY˜[˜ÙYÝY[Â‚˜˜\ÚœØ™ÜKYÝZB˜‚•H[œÝ[Y[žHÚ[\Ù\ÈHÝX\™YÜ˜\\ˆ][ÝÜÈÛ™H^Ü[™Û™H™]šY]È]H[YKØ\\™\ÈÈ˜[Y\È™Y›Ü™HÛÜšÙ\ˆ™XYÈÝ\[™ÛÜÙ\È™\XÙYš\ÝX[^˜][ÛˆšYÝ\™\Ë‚‚”]ZXÚÈÓH^[\\Î‚‚˜˜\ÚœØ™ÜHKX˜\ÙHŒKX™X]LKY\˜][ÛˆŒK[Ý]š[HÙ\ÜÚ[Û‹Ø]‚œØ™ÜHKZ\ÛØÚ›ÛšXÈŒŒK[›Ú\ÙHLˆK[›Ú\ÙKZÚ[™[šÈKY\˜][ÛˆÌK[Ý]š[H›ØÝ\ËØ]‚œØ™ÜHKZ\›[ÛšXËX›ÞNHK[]\ÚXÈœÛÝ[™ØØ\\ËÜ˜Z[‹™›XÈˆK[ÛÜ[]\ÚXÈKY\˜][ÛˆŒK[Ý]š[H˜Z[‹\Ù\ÜÚ[Û‹Ø]‚˜‚ˆÈÈÐ‘ˆØÚY[\Â‚˜˜\ÚœØ™ÜHØÚY[\ËÙ^[\KœØ™ÈK[Ý]š[HØÚY[YØ]‚˜‚‘^[\N‚‚˜^˜[NˆŒ
-ÌLÍL[šËÎœ[ÙNˆ\ÛÎŒŒŒÌÍB˜™Yˆ˜]Y[ËÜÛÙ˜Z[‹™›XËÍ‚‚““ÕÈ[H
-Ø™YNŒ[ÙH
-Ø™YO‚ŒLŒ[H
-Ø™YŒMNŒÙ™‚‚‚”ØÚY[H™Z]š[ÜŽ‚‚‹H[ˆ[œ™Yš^Y]™[™\XÙ\ÈXÝ]™HÛ™HÙ]ÎÂ‹H
-Ú[˜[YXYÈ[™Z[˜[YX™[[Ý™\ÎÂ‹HÙ™˜X[™[Ù™˜ÛX\ˆ]Y[È\È\›ÜšX]NÂ‹HÚ[[˜ÙH™[XZ[œÈÛˆH[Y[[™NÂ‹HÝ[XXÝ]™HÙ[™\˜]ÜœÈ™]Z[ˆ\ÙH[™š[HÜÚ][ÛˆXÜ›ÜÜÈ]™[ÎÂ‹H˜Z[[™ÈO˜Ü›ÜÜÙ˜Y\ÈÝ™\ˆH[[\˜[ÈH™^[YY]™[Â‹H[šÛ›ÝÛˆ˜[Y\È[™X[›Ü›YY˜[œÚ][ÛœÈ\™H\œ›ÜœË‚‚“Ý]]\ÈÝ™X[YY›ÝYÚHØ[YKY\™XÝÜžH[\Ü˜\žHš[H[™]ÛZXØ[H™\XÙ\ÈH\Ý[˜][ÛˆÛ›HY\ˆÝXØÙ\ÜËˆH˜Z[YÜˆ[\H™[™\ˆ™\Ù\™\È[žH^\Ý[™Èš[K‚‚ˆÈÈ]ÛˆTB‚˜]Û‚™œ›ÛH\Ø˜YÙ[ˆ[\ÜÛY\™\]Y\Ý™[™\—ÜÛY\Üš]WØ]Y[Â™œ›ÛH\Ø˜YÙ[‹œÛY\[\ÜZ[ÜÛY\Ü™XÚ\KÜš]WÜ™XÚ\WÛX[šY™\Ý‚œ™\]Y\ÝHÛY\™\]Y\Ý
-ˆ›Ø›[OHœ˜XÚ[™×ÛZ[™‹ˆÛÝ[™ÝÛÜ›HœÛÝ×ÛšYÚÛ]\ÚXÈ‹ˆ[[œÚ]OH˜˜[[˜ÙY‹ˆ\˜][Û—ÛZ[]\ÏMKŠBœ™XÚ\HHZ[ÜÛY\Ü™XÚ\J™\]Y\Ý
-Bœ™\Ý[HÜš]WØ]Y[Ê™[™\—ÜÛY\
-™\]Y\Ý
-KœÛY\Z›Ý\›™^KØ]ˆŠBÜš]WÜ™XÚ\WÛX[šY™\Ý
-™XÚ\K™\Ý[›Ý]š[JB˜‚ˆÈÈÜ™[˜\žH\ÙH[™™\ÙX\˜Ú\ÙH\™HÙ\\˜]B‚•HÛY\ÝZYHÙ\È›ÝÙXÜ™]H\ÜÚYÛˆÚ[HÜˆ›[™YÛÛ™][ÛœËˆH]\™HÙ\\˜][H][˜ÚY
-Š”™\ÙX\˜ÚÜÙH[š\›Û›Y[
-Šˆ\È™\Ù\™Y›Üˆ[™›Ü›YYÛÛœÙ[[YÚXš[]K›ÝØÛÛ\ÜÚYÛ›Y[^XÝ™XÚ\\Ë™KÜÜÝYX\Ý\™\ËY™\œÙKYY™™XÝ™\Ü[™Ë[™^Ü‚‚ˆÈÈ]X[YšXØ][Û‚‚˜˜\Úœ]\Ýœ]Ûˆ[HÛÛ\[X[\H\Ø˜YÙ[ˆÝZKœHÝZWÜØY™KœHÛY\ÙÝZKœHš\ÝX[^˜][Û‹œH™×ÙXÛÙ\‹œBœ]Ûˆ[H\ÚY[ˆK[›ËY\Â˜‚‘Ú]XˆXÝ[ÛœÈ]X[YšY\È]ÛˆËŒL8 $ÌËŒLË‚‚ˆÈÈØY™]B‚•\ÙHHÛÛY›ÜX›H›Û[YH[™ÝÜÛˆ\ØÛÛY›ÜXYXÚK^žš[™\ÜËYÚ]][Û‹ÜˆÛÜœÙ[™YÞ[\Û\ËˆÈ›Ý\ÙHÛY\]Y[ÈÚ[Hš]š[™ÈÜˆÚ[™È[\™\ÜËXÜš]XØ[ÛÜšË‚‚”TØ˜YÙ[ˆÙ\È›Ý›ÛZ\ÙHXYÛ›ÜÚ\Ë™X]Y[Ü[Z[™H[]™\žKÝX\˜[YYÛY\Z[ˆÜˆZYÜ˜Z[™H™[YY‹ÛØœšY]KÜˆ™Z]š[Ü˜[Ý]ÛÛY\ËˆÙ]™\™HÜˆ[\ÝX[Þ[\Û\Ë[™Ù\›Ý\ÈÚ]˜]Ø[Ý™\™ÜÙKÙ[‹Z\›Hš\ÚË[™\™Ù[Üš\Ù\È™\]Z\™H™X[]ÛÜ››Ù™\ÜÚ[Û˜[[Y\™Ù[˜ÞKÜˆÜš\Ú\ÈÝ\Ü‚‚ˆÈÈXÙ[œÙB‚•H]ÛˆXÚØYÙHY]Y]HXÛ\™\ÈÔL‹Œ[Û›XÛÛœÚ\Ý[Ú]H™\Ù\™YÐ˜QÙ[ˆ[™XYÙKˆ™\šYžHYYXH[™\[™[˜ÞHXÙ[œÙ\È™Y›Ü™H\ÝšX][Û‹‚
+Immediate playback:
+
+```bash
+python -m pip install -e ".[playback]"
+```
+
+Full desktop setup:
+
+```bash
+python -m pip install -e ".[desktop]"
+```
+
+For development:
+
+```bash
+python -m pip install -e ".[dev]"
+pytest
+```
+
+PyAudio can require operating-system audio packages. Export remains available without it. SoundFile handles common formats; FFmpeg is the broad streaming fallback for other locally decodable formats.
+
+## Sleep Guide
+
+Open the desktop guide:
+
+```bash
+sbgpy-sleep-gui
+```
+
+Or use the terminal guide:
+
+```bash
+sbgpy-sleep
+sbgpy-sleep --play
+```
+
+The guide asks:
+
+1. What is keeping you awake?
+2. What sound world feels tolerable or pleasant tonight?
+3. How present should the underlying layers feel?
+4. How long should the journey remain?
+
+It chooses among three materially different routes:
+
+- **Racing Mind Descent**: more initial movement followed by a long reduction in novelty.
+- **Crossing the Threshold**: a quieter descent for someone already relaxed.
+- **Stay-Asleep Support**: a shorter descent and longer stable support period.
+
+Every route contains a **Sleep Descent** phase and a quieter **Sleep Support** phase. The current transition is planned by time. Sensor integration remains documented future work and has intentionally not been wired to nonexistent hardware or endpoints.
+
+Generated sound worlds include warm ambience, slow night music, a rain-like room, and a deep-night environment. User-provided audio is also supported in broadly decodable formats and streams in bounded chunks instead of being loaded or tiled into a session-sized array.
+
+Underlying binaural, monaural, isochronic, and Harmonic Box X-style layers are independently selectable, change over time, and recede during support. Saved journeys include an exact `.sleep.json` recipe.
+
+See:
+
+- `docs/SLEEP_GUIDE.md`
+- `docs/research/SLEEP_AUDIO_RESEARCH_FOUNDATIONS.md`
+
+## Advanced Studio
+
+```bash
+sbgpy-gui
+```
+
+The installed entry point uses a guarded wrapper that:
+
+- allows one export and one preview at a time;
+- captures Tk values before worker threads start;
+- keeps Tk updates on the UI thread;
+- closes replaced Matplotlib figures.
+
+Quick CLI examples:
+
+```bash
+sbgpy --base 200 --beat 10 --duration 60 --outfile session.wav
+sbgpy --isochronic 220 8 --noise 12 --noise-kind pink --duration 300 --outfile focus.wav
+sbgpy --harmonic-box 180 5 8 --music "soundscapes/rain.flac" --loop-music --duration 600 --outfile rain-session.wav
+```
+
+## SBG schedules
+
+```bash
+sbgpy schedules/example.sbg --outfile scheduled.wav
+```
+
+Example:
+
+```text
+alpha: 200+10/50 pink/8
+pulse: iso:220,8/35
+bed: "audio/soft rain.flac/40"
+
+NOW alpha +bed
+5:00 pulse +bed ->
+10:00 alpha +bed
+15:00 off
+```
+
+Schedule behavior:
+
+- an unprefixed event replaces active tone sets;
+- `+name` adds and `-name` removes;
+- `off`, `-`, and `alloff` clear audio as appropriate;
+- silence remains on the timeline;
+- still-active generators retain phase and file position across events;
+- trailing `->` crossfades over the full interval to the next timed event;
+- unknown names and malformed transitions are errors.
+
+Output is written to a same-directory temporary file and atomically replaces the destination only after success. A failed or empty render preserves an existing file.
+
+## Python API
+
+```python
+from pysbagen import SleepRequest, render_sleep, write_audio
+from pysbagen.sleep import build_sleep_recipe, write_recipe_manifest
+
+request = SleepRequest(
+    problem="racing_mind",
+    sound_world="slow_night_music",
+    intensity="balanced",
+    duration_minutes=45,
+)
+recipe = build_sleep_recipe(request)
+result = write_audio(render_sleep(request), "sleep-journey.wav")
+write_recipe_manifest(recipe, result.outfile)
+```
+
+## Ordinary use and research use are separate
+
+The Sleep Guide does not secretly assign sham or blinded conditions. A future separately launched **Research Dose Environment** is reserved for informed consent, eligibility, protocol assignment, exact recipes, pre/post measures, adverse-effect reporting, and data export.
+
+## Qualification
+
+```bash
+pytest
+python -m compileall -q pysbagen gui.py gui_safe.py sleep_gui.py visualization.py drg_decoder.py
+python -m pip wheel . --no-deps
+```
+
+GitHub Actions qualifies Python 3.10 through 3.13.
+
+## Safety
+
+Use a comfortable volume and stop on discomfort, headache, dizziness, agitation, or worsened symptoms. Do not use sleep audio while driving or doing alertness-critical work.
+
+PySbagen does not promise diagnosis, treatment, dopamine delivery, guaranteed sleep, pain or migraine relief, sobriety, or behavioral outcomes. Severe or unusual symptoms, dangerous withdrawal, overdose, self-harm risk, and urgent crises require real-world professional, emergency, or crisis support.
+
+## License
+
+The Python package metadata declares `GPL-2.0-only`, consistent with the preserved SBaGen lineage. Verify media and dependency licenses before distribution.

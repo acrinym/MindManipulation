@@ -1,8 +1,10 @@
 from pathlib import Path
 
 import numpy as np
+import pytest
 import soundfile as sf
 
+import pysbagen.generators.file as file_generator
 from pysbagen.generators import FileSpec
 from pysbagen.mixer import SR, mix_generators
 
@@ -31,3 +33,39 @@ def test_short_file_is_padded_and_loop_option_repeats(tmp_path: Path):
 
     assert np.allclose(padded[100:], 0)
     assert np.any(looped[100:] != 0)
+
+
+def test_mp3_requires_ffmpeg_without_importing_legacy_audioop(tmp_path: Path, monkeypatch):
+    path = tmp_path / "session.mp3"
+    path.write_bytes(b"not-real-mp3")
+    monkeypatch.setattr(file_generator.shutil, "which", lambda executable: None)
+
+    with pytest.raises(RuntimeError, match="FFmpeg"):
+        FileSpec(path=str(path))._load()
+
+
+def test_mp3_decoder_reads_ffmpeg_float_output(tmp_path: Path, monkeypatch):
+    path = tmp_path / "session.mp3"
+    path.write_bytes(b"not-real-mp3")
+    expected = np.array([[0.25, -0.25], [0.5, -0.5]], dtype="<f4")
+    captured = {}
+
+    class Result:
+        returncode = 0
+        stdout = expected.tobytes()
+        stderr = b""
+
+    def fake_run(command, capture_output, check):
+        captured["command"] = command
+        assert capture_output is True
+        assert check is False
+        return Result()
+
+    monkeypatch.setattr(file_generator.shutil, "which", lambda executable: "/usr/bin/ffmpeg")
+    monkeypatch.setattr(file_generator.subprocess, "run", fake_run)
+
+    decoded = FileSpec(path=str(path))._load()
+
+    np.testing.assert_array_equal(decoded, expected)
+    assert captured["command"][-1] == "pipe:1"
+    assert captured["command"][captured["command"].index("-ar") + 1] == str(SR)

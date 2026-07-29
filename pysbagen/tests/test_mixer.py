@@ -1,24 +1,49 @@
 import numpy as np
-from pysbagen.mixer import mix_generators
-from pysbagen.generators.binaural import ToneSpec
+import pytest
 
-def test_mix_generators():
-    # Create a couple of tone specs
-    spec1 = ToneSpec(base=200, beat=10, amp=50)
-    spec2 = ToneSpec(base=300, beat=20, amp=50)
+from pysbagen.generators import ToneSpec
+from pysbagen.mixer import SR, build_session_generator, mix_generators
 
-    # Mix them for 1 second
-    duration = 1.0
-    mixed_generator = mix_generators([spec1, spec2], duration)
 
-    # Get all the chunks and stack them
-    chunks = [chunk for chunk, info in mixed_generator]
-    audio = np.vstack(chunks)
+class ShortGenerator:
+    sample_rate = SR
 
-    # Check the shape of the output
-    assert audio.shape[0] == int(44100 * duration)
-    assert audio.shape[1] == 2
+    def generator(self, duration):
+        yield np.ones((100, 1), dtype=np.float32), {"type": "short"}
 
-    # Check the peak level
-    peak = np.max(np.abs(audio))
-    assert peak <= 1.0
+
+def stack(generator):
+    return np.vstack([chunk for chunk, _ in generator])
+
+
+def test_mix_generators_has_exact_duration():
+    audio = stack(mix_generators([ToneSpec(base=200, beat=10, amp=50)], 1.125))
+    assert audio.shape == (int(SR * 1.125), 2)
+    assert np.max(np.abs(audio)) <= 1.0
+
+
+def test_exhausted_stream_does_not_truncate_other_generators():
+    audio = stack(mix_generators([ShortGenerator(), ToneSpec()], 0.1))
+    assert audio.shape == (int(SR * 0.1), 2)
+    assert np.any(audio[100:] != 0)
+
+
+def test_empty_mix_preserves_silent_timeline():
+    audio = stack(mix_generators([], 0.25))
+    assert audio.shape == (int(SR * 0.25), 2)
+    assert np.all(audio == 0)
+
+
+def test_schedule_preserves_leading_silence_and_honors_duration():
+    tone = ToneSpec(base=200, beat=10)
+    schedule = [(1.0, ["alpha"]), (3.0, ["off"])]
+    audio = stack(build_session_generator({"alpha": [tone]}, schedule, duration=2.0))
+
+    assert audio.shape == (int(SR * 2.0), 2)
+    assert np.all(audio[:SR] == 0)
+    assert np.any(audio[SR:] != 0)
+
+
+def test_unknown_schedule_name_fails_loudly():
+    with pytest.raises(ValueError, match="unknown tone set"):
+        list(build_session_generator({}, [(0, ["missing"]), (1, ["off"])], duration=1))

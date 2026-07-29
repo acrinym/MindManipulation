@@ -15,8 +15,8 @@ class FileSpec(GenBase):
     path: str = ""
     loop: bool = False
 
-    def _load_mp3(self) -> np.ndarray:
-        segment = AudioSegment.from_mp3(self.path)
+    def _load_mp3(self, path: Path) -> np.ndarray:
+        segment = AudioSegment.from_mp3(path)
         segment = segment.set_frame_rate(self.sample_rate).set_channels(2)
         raw = np.asarray(segment.get_array_of_samples())
         data = raw.reshape((-1, 2)).astype(np.float32)
@@ -36,7 +36,7 @@ class FileSpec(GenBase):
         if not path.is_file():
             raise FileNotFoundError(f"Audio file not found: {path}")
         if path.suffix.lower() == ".mp3":
-            return self._load_mp3()
+            return self._load_mp3(path)
 
         data, rate = sf.read(path, dtype="float32", always_2d=True)
         data = self._stereo_data(data)

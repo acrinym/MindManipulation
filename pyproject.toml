@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pysbagen"
-version = "0.2.0"
-description = "Modern Python reimplementation of SBaGen with plugin generators"
+version = "0.3.0"
+description = "Layered sleep-audio guide and modern SBaGen-compatible session studio"
 readme = "README.md"
 license = {text = "GPL-2.0-only"}
 authors = [{name="Justin (acrinym)"}]
@@ -23,12 +23,14 @@ gui = ["matplotlib>=3.8", "pillow>=10", "pyaudio>=0.2.14"]
 [project.scripts]
 sbgpy = "pysbagen.cli:main"
 sbgpy-gui = "gui:main"
+sbgpy-sleep = "pysbagen.sleep_cli:main"
+sbgpy-sleep-gui = "sleep_gui:main"
 
 [project.entry-points."pysbagen.generators"]
 # Third parties can register generator plugins in this group.
 
 [tool.setuptools]
-py-modules = ["gui", "visualization", "drg_decoder"]
+py-modules = ["gui", "sleep_gui", "visualization", "drg_decoder"]
 
 [tool.setuptools.packages.find]
 where = ["."]

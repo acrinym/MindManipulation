@@ -56,6 +56,7 @@ This train is product work, not a recursive audit. The smell/bug check below exi
 - Preserve silence instead of collapsing the schedule.
 - Honor explicit duration boundaries.
 - Fail loudly on unknown tone-set names.
+- Remove scheduled generators by object identity so equal-valued tone sets do not erase each other.
 
 ### Bead 4 — Make schedules and background audio dependable
 **Status:** complete
@@ -66,6 +67,7 @@ This train is product work, not a recursive audit. The smell/bug check below exi
 - Normalize mono/multichannel input to stereo.
 - Make looping a real `FileSpec` behavior.
 - Keep pink-noise filter state continuous.
+- Expand user paths consistently for MP3 and other supported audio files.
 
 ### Bead 5 — Repair the GUI as a real front door
 **Status:** complete
@@ -88,11 +90,12 @@ This train is product work, not a recursive audit. The smell/bug check below exi
 
 - Add parser, mixer, schedule, file, API, and CLI tests.
 - Add GitHub Actions qualification on supported Python versions.
-- Validate locally with 13 passing tests and a wheel build.
+- Validate locally with 14 passing tests, compile checks, and a wheel build.
 
 ## Qualification
 
-- `PYTHONPATH=. pytest -q` → **13 passed**
+- `PYTHONPATH=. pytest -q` → **14 passed**
+- `python -m compileall -q pysbagen gui.py visualization.py drg_decoder.py` → **passed**
 - `python -m pip wheel . --no-deps --no-build-isolation` → **wheel built successfully**
 - Wheel inspection confirms the canonical `pysbagen` package and GUI modules are included while the nested duplicate and tests are excluded.
 

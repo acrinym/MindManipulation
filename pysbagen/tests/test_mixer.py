@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from pysbagen.generators import ToneSpec
-from pysbagen.mixer import SR, build_session_generator, mix_generators
+from pysbagen.mixer import SR, _apply_schedule_event, build_session_generator, mix_generators
 
 
 class ShortGenerator:
@@ -47,3 +47,15 @@ def test_schedule_preserves_leading_silence_and_honors_duration():
 def test_unknown_schedule_name_fails_loudly():
     with pytest.raises(ValueError, match="unknown tone set"):
         list(build_session_generator({}, [(0, ["missing"]), (1, ["off"])], duration=1))
+
+
+def test_relative_removal_uses_identity_not_dataclass_equality():
+    first = ToneSpec(base=200, beat=10)
+    equal_but_distinct = ToneSpec(base=200, beat=10)
+    tone_sets = {"first": [first], "second": [equal_but_distinct]}
+
+    active = _apply_schedule_event([], tone_sets, ["first", "+second"])
+    active = _apply_schedule_event(active, tone_sets, ["-first"])
+
+    assert active == [equal_but_distinct]
+    assert active[0] is equal_but_distinct

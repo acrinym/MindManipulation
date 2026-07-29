@@ -7,7 +7,7 @@ import numpy as np
 from scipy.signal import lfilter
 
 from .base import GenBase
-from .file import load_audio
+from .file import iter_audio_chunks
 
 if TYPE_CHECKING:
     from pysbagen.sleep import SleepRecipe
@@ -18,9 +18,6 @@ def _smoothstep(value: np.ndarray | float) -> np.ndarray:
     return x * x * (3.0 - 2.0 * x)
 
 
-def _looped_slice(data: np.ndarray, start: int, length: int) -> np.ndarray:
-    indices = (np.arange(length) + start) % len(data)
-    return data[indices]
 
 
 @dataclass
@@ -108,7 +105,7 @@ class SleepJourneySpec(GenBase):
         recipe = self.recipe
         request = recipe.request
         request.validate()
-        if request.layers is None:
+        if request.layers is None:  # build_sleep_recipe always resolves this.
             raise ValueError("Sleep recipe has no resolved layer selection")
         requested_duration = recipe.duration_seconds
         if abs(duration - requested_duration) > 1.0 / self.sample_rate:
@@ -119,11 +116,15 @@ class SleepJourneySpec(GenBase):
         total_frames = int(self.sample_rate * duration)
         descent = max(recipe.descent_seconds, 1.0)
         fade_in_seconds = min(30.0, duration * 0.08)
-        user_audio = None
+        user_audio_chunks = None
         if request.user_audio:
-            user_audio = load_audio(request.user_audio, self.sample_rate)
-            if len(user_audio) == 0:
-                raise ValueError(f"Audio file is empty: {request.user_audio}")
+            user_audio_chunks = iter_audio_chunks(
+                request.user_audio,
+                total_frames,
+                self.frame,
+                self.sample_rate,
+                loop=True,
+            )
 
         intensity = {
             "gentle": {"bed": 0.42, "binaural": 0.035, "monaural": 0.018, "iso": 0.012, "hbox": 0.014},
@@ -152,8 +153,12 @@ class SleepJourneySpec(GenBase):
 
             generated_world = "deep_night" if request.sound_world == "user_audio" else request.sound_world
             bed = self._generated_bed(t, generated_world, rng, filter_state, novelty, phases)
-            if user_audio is not None:
-                supplied = _looped_slice(user_audio, offset, n)
+            if user_audio_chunks is not None:
+                supplied = next(user_audio_chunks)
+                if len(supplied) != n:
+                    raise ValueError(
+                        f"User audio returned {len(supplied)} frames where {n} were required"
+                    )
                 bed = supplied * 0.92 + bed * 0.08
             output = bed * (intensity["bed"] * bed_envelope[:, None])
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Iterator
@@ -80,23 +82,44 @@ def write_audio(
     outfile: str | Path,
     sample_rate: int = SR,
 ) -> RenderResult:
+    """Write atomically so a failed render never destroys an existing destination."""
     path = Path(outfile).expanduser()
     if path.parent != Path("."):
         path.parent.mkdir(parents=True, exist_ok=True)
+    parent = path.parent if path.parent != Path("") else Path(".")
+    suffix = path.suffix or ".wav"
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.stem or 'pysbagen'}-",
+        suffix=f".tmp{suffix}",
+        dir=parent,
+    )
+    os.close(descriptor)
+    temporary_path = Path(temporary_name)
 
     frames = 0
     peak = 0.0
-    with sf.SoundFile(path, mode="w", samplerate=sample_rate, channels=2) as output:
-        for chunk, _ in chunks:
-            normalized = np.asarray(chunk, dtype=np.float32)
-            if normalized.ndim != 2 or normalized.shape[1] != 2:
-                raise ValueError(f"Writer expected stereo chunks, got {normalized.shape}")
-            output.write(normalized)
-            frames += len(normalized)
-            if len(normalized):
-                peak = max(peak, float(np.max(np.abs(normalized))))
+    try:
+        with sf.SoundFile(
+            temporary_path,
+            mode="w",
+            samplerate=sample_rate,
+            channels=2,
+            format="WAV" if not path.suffix else None,
+        ) as output:
+            for chunk, _ in chunks:
+                normalized = np.asarray(chunk, dtype=np.float32)
+                if normalized.ndim != 2 or normalized.shape[1] != 2:
+                    raise ValueError(f"Writer expected stereo chunks, got {normalized.shape}")
+                output.write(normalized)
+                frames += len(normalized)
+                if len(normalized):
+                    peak = max(peak, float(np.max(np.abs(normalized))))
 
-    if frames == 0:
-        path.unlink(missing_ok=True)
-        raise ValueError("No audio was generated")
+        if frames == 0:
+            raise ValueError("No audio was generated")
+        os.replace(temporary_path, path)
+    except Exception:
+        temporary_path.unlink(missing_ok=True)
+        raise
+
     return RenderResult(path.resolve(), frames, sample_rate, peak)

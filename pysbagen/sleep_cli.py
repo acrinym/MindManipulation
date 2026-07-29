@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 
 from .api import render_sleep, write_audio
 from .playback import play_chunks
@@ -35,25 +36,13 @@ def collect_sleep_request(input_fn=input, print_fn=print) -> SleepRequest:
     print_fn("PySbagen Sleep Guide")
     print_fn("Answer four brief questions. You do not need to know anything about frequencies.")
     problem = _choose("What is keeping you awake tonight?", PROBLEM_LABELS, input_fn, print_fn)
-    sound_world = _choose(
-        "What kind of sound feels tolerable or pleasant tonight?",
-        SOUND_WORLD_LABELS,
-        input_fn,
-        print_fn,
-    )
+    sound_world = _choose("What kind of sound feels tolerable or pleasant tonight?", SOUND_WORLD_LABELS, input_fn, print_fn)
     user_audio = None
     if sound_world == "user_audio":
         user_audio = input_fn("Path to your music or audio file: ").strip()
-    intensity = _choose(
-        "How present should the underlying layers feel?",
-        INTENSITY_LABELS,
-        input_fn,
-        print_fn,
-    )
+    intensity = _choose("How present should the underlying layers feel?", INTENSITY_LABELS, input_fn, print_fn)
     durations = {str(value): f"{value} minutes" for value in DURATION_CHOICES}
-    duration = float(
-        _choose("How long should the journey stay with you?", durations, input_fn, print_fn)
-    )
+    duration = float(_choose("How long should the journey stay with you?", durations, input_fn, print_fn))
     return SleepRequest(
         problem=problem,
         sound_world=sound_world,
@@ -66,11 +55,7 @@ def collect_sleep_request(input_fn=input, print_fn=print) -> SleepRequest:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Conversational PySbagen sleep guide")
     parser.add_argument("-o", "--outfile", default="sleep-journey.wav")
-    parser.add_argument(
-        "--play",
-        action="store_true",
-        help="Play immediately instead of only writing a file",
-    )
+    parser.add_argument("--play", action="store_true", help="Play immediately instead of only writing a file")
     return parser
 
 
@@ -81,7 +66,8 @@ def main(argv: list[str] | None = None) -> int:
         recipe = build_sleep_recipe(request)
         print(f"\nMatched journey: {recipe.name}")
         print(recipe.description)
-        print("This is a sleep-support audio experience, not a guaranteed medical treatment.")
+        print("This is a sleep-preparation audio experience, not medical, addiction, or emergency treatment.")
+        print("Use normal professional or emergency support for dangerous withdrawal, severe or unusual symptoms, or an urgent crisis.")
         if args.play:
             print("Starting playback. Press Ctrl+C to stop.")
             play_chunks(render_sleep(request))

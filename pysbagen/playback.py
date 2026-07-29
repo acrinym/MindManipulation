@@ -17,7 +17,7 @@ def play_chunks(
         import pyaudio
     except ImportError as exc:
         raise RuntimeError(
-            "Live playback requires the GUI extra and a working PyAudio installation: pip install 'pysbagen[gui]'"
+            "Live playback requires the GUI extra and a working PyAudio installation: pip install 'pysbagen[playback]'"
         ) from exc
 
     audio = pyaudio.PyAudio()

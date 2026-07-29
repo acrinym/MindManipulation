@@ -119,7 +119,8 @@ def _apply_schedule_event(active: list, tone_sets: dict, names: list[str]) -> li
             raise ValueError(f"Schedule references unknown tone set: {name}")
         selected = tone_sets[name]
         if operation == "-":
-            active = [generator for generator in active if generator not in selected]
+            selected_ids = {id(generator) for generator in selected}
+            active = [generator for generator in active if id(generator) not in selected_ids]
         else:
             active.extend(selected)
     return active

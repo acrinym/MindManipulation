@@ -31,6 +31,7 @@ This train is product work, not a recursive audit. The smell/bug check below exi
 15. Pink-noise filter state reset every chunk, creating discontinuities.
 16. The package carried a second nested source copy. It is preserved for provenance, but packaging did not explicitly exclude it from the canonical distribution.
 17. Tests covered only one happy-path parser example and one one-second mixer example.
+18. Python 3.13 qualification exposed that `pydub` imported the removed standard-library `audioop` module during package import, breaking every product path even when MP3 was not used.
 
 ## Beads
 
@@ -68,6 +69,7 @@ This train is product work, not a recursive audit. The smell/bug check below exi
 - Make looping a real `FileSpec` behavior.
 - Keep pink-noise filter state continuous.
 - Expand user paths consistently for MP3 and other supported audio files.
+- Decode MP3 directly through FFmpeg, removing the obsolete `pydub`/`audioop` compatibility trap.
 
 ### Bead 5 — Repair the GUI as a real front door
 **Status:** complete
@@ -88,16 +90,17 @@ This train is product work, not a recursive audit. The smell/bug check below exi
 ### Bead 7 — Prove the user journeys
 **Status:** complete
 
-- Add parser, mixer, schedule, file, API, and CLI tests.
+- Add parser, mixer, schedule, file, MP3/FFmpeg, API, and CLI tests.
 - Add GitHub Actions qualification on supported Python versions.
-- Validate locally with 14 passing tests, compile checks, and a wheel build.
+- Validate locally under Python 3.13 with 16 passing tests, compile checks, and a wheel build.
 
 ## Qualification
 
-- `PYTHONPATH=. pytest -q` → **14 passed**
+- `PYTHONPATH=. pytest -q` → **16 passed on Python 3.13**
 - `python -m compileall -q pysbagen gui.py visualization.py drg_decoder.py` → **passed**
 - `python -m pip wheel . --no-deps --no-build-isolation` → **wheel built successfully**
 - Wheel inspection confirms the canonical `pysbagen` package and GUI modules are included while the nested duplicate and tests are excluded.
+- The first live matrix run correctly caught the `pydub`/`audioop` incompatibility on Python 3.13; the dependency was removed and a new matrix run was triggered by the repair commits.
 
 ## Next product train
 

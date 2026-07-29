@@ -96,14 +96,29 @@ Saved journeys receive `.sleep.json` manifests with exact timing, carrier/beat m
 - consent or study protocol UI inside the ordinary app;
 - claims that a frequency guarantees sleep, dopamine, pain relief, migraine relief, or sobriety.
 
+## Review-driven product repairs
+
+Live review found several real product faults after the first sleep implementation. They were repaired rather than deferred into an audit report:
+
+- file output now renders to a same-directory temporary file and atomically replaces the destination only after success;
+- failed or empty renders preserve any existing destination;
+- long looping background audio streams in bounded chunks instead of `np.tile`-materializing the full session;
+- FFmpeg product paths stream decoded audio instead of buffering the entire decoded source;
+- schedule generators that remain active keep their phase and file position across event boundaries;
+- a bare `-` event really silences the schedule;
+- trailing SBaGen `->` syntax is preserved and performs a full-interval crossfade to the next timed event instead of flattening both tone sets together;
+- the canonical advanced-studio entry point now uses a guarded wrapper that captures widget values on the Tk thread, prevents overlapping export jobs and previews, and closes replaced Matplotlib figures;
+- GUI and playback dependencies are separate, with a combined `desktop` extra;
+- research evidence and user-facing safety boundaries were tightened before calling the train complete.
+
 ## Qualification
 
 Local reconstructed exact product path:
 
-- `PYTHONPATH=. pytest -q` — **26 passed**;
-- `python -m compileall -q pysbagen sleep_gui.py` — **passed**;
+- `PYTHONPATH=. pytest -q` — **33 passed**;
+- `python -m compileall -q pysbagen gui.py gui_safe.py sleep_gui.py visualization.py drg_decoder.py` — **passed**;
 - `python -m pip wheel . --no-deps --no-build-isolation` — **built `pysbagen-0.3.0-py3-none-any.whl`**;
-- wheel contents inspected — sleep model, generator, terminal guide, playback helper, and desktop guide included.
+- wheel contents inspected — sleep model, generator, terminal guide, playback helper, Sleep Guide, and advanced studio included.
 
 ## Truthful continuation
 

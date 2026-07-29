@@ -1,85 +1,17 @@
-# MindManipulation / pysbagen
+# MindManipulation / PySbagen
 
-`pysbagen` is a local layered-audio product for people who want help changing the conditions around a difficult moment without needing to understand audio engineering.
+PySbagen is a local layered-audio product with two front doors:
 
-Its first complete human use-case is **sleep difficulty**:
+- **Sleep Guide** â€” answer ordinary questions and receive a matched, gradually fading audio journey;
+- **Advanced Studio** â€” build SBaGen schedules, binaural, monaural, isochronic, Harmonic Box X-style, noise, music, I-Doser, and visualization sessions.
+
+Its first complete human use case is sleep difficulty:
 
 - â€œMy mind will not stop.â€
-- â€œI feel relaxed, but I cannot cross into sleep.â€
+- â€œI feel relaxed, but cannot cross into sleep.â€
 - â€œI fall asleep, then keep waking back up.â€
 
-The Sleep Guide asks a few ordinary questions, creates a matched time-changing journey, and either plays it immediately or saves it for later. Pleasant generated music, ambient sound, rain-like sound, deep-night sound, or the listenerâ€™s own audio can carry independently controlled binaural, monaural, isochronic, and Harmonic Box X-style layers.
-
-The repository also preserves the advanced SBaGen-compatible laboratory for schedules, tone construction, I-Doser decoding, and exact audio experiments. The **canonical maintained Python product** is the top-level `pysbagen/` package.
-
-## Start with the Sleep Guide
-
-Install the GUI and playback extras:
-
-```bash
-python -m pip install -e ".[gui]"
-```
-
-Open the conversational desktop guide:
-
-```bash
-sbgpy-sleep-gui
-```
-
-Or use the terminal guide:
-
-```bash
-sbgpy-sleep
-```
-
-To answer the questions and begin live playback instead of saving a file:
-
-```bash
-sbgpy-sleep --play
-```
-
-The guide asks:
-
-1. what is keeping you awake;
-2. what kind of sound feels pleasant or tolerable tonight;
-3. how present the underlying layers should feel;
-4. how long the journey should remain before fading away.
-
-It then selects one of three materially different routes:
-
-- **Racing Mind Descent** â€” more initial movement, followed by a long reduction in novelty;
-- **Crossing the Threshold** â€” a quieter descent for someone already relaxed;
-- **Stay-Asleep Support** â€” a shorter descent and longer stable support bed.
-
-Each route contains a **Sleep Descent** period and a quieter **Sleep Support** period. The present implementation uses a planned transition. Sensor-driven sleep-state detection remains documented future work and has intentionally not been wired to nonexistent devices or endpoints.
-
-### Pleasant audio choices
-
-PySbagen currently generates four original sound worlds:
-
-- warm evolving ambient chords;
-- slow night music with long chord movement and a sparse fading melody;
-- a soft rain-like room;
-- a dark low-stimulation night environment.
-
-The listener can instead supply their own music, ambience, recording, or other audio. SoundFile handles common formats directly; FFmpeg is used as a broad fallback for other locally decodable formats. This is not a WAV-only workflow.
-
-### Underlying layers
-
-Normal users can accept a recommended blend. They may also choose among:
-
-- binaural;
-- monaural;
-- soft isochronic modulation;
-- Harmonic Box X-style multi-layer modulation.
-
-The layers change over time and recede strongly during the support period. PySbagen does not encode one technique as universally superior.
-
-When a journey is saved, PySbagen also writes a `.sleep.json` manifest containing the exact route, timing, carrier and beat movement, layer choices, seed, andâ€”when suppliedâ€”the source-audio SHA-256. That makes a personally useful session reproducible without turning ordinary use into a research study.
-
-See [`docs/SLEEP_GUIDE.md`](docs/SLEEP_GUIDE.md) for the complete product behavior and [`docs/research/SLEEP_AUDIO_RESEARCH_FOUNDATIONS.md`](docs/research/SLEEP_AUDIO_RESEARCH_FOUNDATIONS.md) for the research basis and evidence limits.
-
-## Install the advanced studio
+## Install
 
 Python 3.10 or newer is required.
 
@@ -87,206 +19,32 @@ Python 3.10 or newer is required.
 python -m pip install .
 ```
 
-For development and tests:
-
-```bash
-python -m pip install -e ".[dev]"
-pytest
-```
-
-For desktop applications and live playback:
+Export-capable desktop interfaces:
 
 ```bash
 python -m pip install -e ".[gui]"
 ```
 
-PyAudio can require an operating-system audio package or compiler toolchain. File generation does **not** depend on PyAudio; both desktop applications can still export audio when live playback is unavailable.
-
-FFmpeg should be installed and discoverable on the system path for formats that SoundFile cannot decode.
-
-## Advanced CLI generation
-
-Create a 60-second binaural session:
-
-```bash
-sbgpy --base 200 --beat 10 --duration 60 --outfile session.wav
-```
-
-Create an isochronic session with pink noise:
-
-```bash
-sbgpy \
-  --isochronic 220 8 \
-  --noise 12 \
-  --noise-kind pink \
-  --duration 300 \
-  --outfile focus.wav
-```
-
-Combine Harmonic Box X-style audio with a looping soundscape:
-
-```bash
-sbgpy \
-  --harmonic-box 180 5 8 \
-  --music "soundscapes/rain.wav" \
-  --music-amp 40 \
-  --loop-music \
-  --duration 600 \
-  --outfile rain-session.wav
-```
-
-The writer streams chunks directly to disk instead of buffering an entire long session in memory.
-
-## SBG schedules
-
-Generate a schedule:
-
-```bash
-sbgpy schedules/example.sbg --outfile scheduled.wav
-```
-
-Override its endpoint:
-
-```bash
-sbgpy schedules/example.sbg --duration 900 --outfile scheduled.wav
-```
-
-A small schedule looks like this:
-
-```text
-# Components are declared first.
-alpha: 200+10/50 pink/8
-pulse: iso:220,8/35
-bed: "audio/soft rain.wav/40"
-
-# Events follow. The final event normally marks the end.
-NOW alpha +bed
-5:00 pulse +bed
-10:00 off
-```
-
-Supported component forms:
-
-```text
-200+10/50             # base + beat / amplitude
-200-10/50             # negative beat difference
-white/10              # white noise / amplitude
-pink/10               # pink noise / amplitude
-iso:220,8/40          # frequency, beat / amplitude
-hbox:180,5,8/35       # base, difference, modulation / amplitude
-file:audio/rain.wav/40
-"audio/soft rain.wav/40"
-```
-
-Audio paths inside schedules are resolved relative to the schedule file, not the shellâ€™s current directory. Quoted paths may contain spaces. Source audio is converted to stereo and resampled to 44.1 kHz when necessary.
-
-Schedule event behavior:
-
-- an unprefixed event replaces the active tone sets;
-- `+name` adds a tone set;
-- `-name` removes a tone set;
-- `off`, `-`, or `alloff` clears audio as appropriate;
-- silent spans remain real silence and do not collapse the timeline;
-- unknown tone-set names produce an error instead of silently disappearing.
-
-When no explicit `--duration` is supplied, the final schedule timestamp is treated as the endpoint. End a schedule with an `off` event when the final active section needs a defined length.
-
-## Advanced desktop studio
-
-```bash
-sbgpy-gui
-```
-
-The advanced application provides:
-
-- quick binaural export;
-- isochronic, Harmonic Box X, noise, and background-audio sessions;
-- SBG selection and duration override;
-- I-Doser loading, artwork preview, and schedule generation;
-- a multi-tone waveform builder with optional looping soundscape;
-- Chladni visualization;
-- optional live preview through PyAudio.
-
-All export paths use the same `pysbagen.api` functions as the CLI.
-
-## Python API
-
-Create a sleep journey:
-
-```python
-from pysbagen import SleepRequest, render_sleep, write_audio
-from pysbagen.sleep import build_sleep_recipe, write_recipe_manifest
-
-request = SleepRequest(
-    problem="racing_mind",
-    sound_world="slow_night_music",
-    intensity="balanced",
-    duration_minutes=45,
-)
-recipe = build_sleep_recipe(request)
-result = write_audio(render_sleep(request), "sleep-journey.wav")
-write_recipe_manifest(recipe, result.outfile)
-```
-
-Create a direct generator session:
-
-```python
-from pysbagen.api import build_quick_specs, render_specs, write_audio
-
-specs = build_quick_specs(
-    base=200,
-    beat=10,
-    noise=8,
-    noise_kind="pink",
-)
-result = write_audio(render_specs(specs, 60), "session.wav")
-print(result.duration, result.outfile)
-```
-
-Third-party generator packages can register entry points under `pysbagen.generators`. A generator must expose a `generator(duration)` iterator that yields `(audio_chunk, info)` pairs at 44.1 kHz.
-
-## Ordinary use and research use are separate
-
-The Sleep Guide is help-oriented. It does not assign blinded conditions, present sham sessions, or make the user feel like an unwitting experiment.
-
-A future **Research Dose Environment** is documented separately for consenting volunteers, protocol versioning, exact condition assignment, pre/post measures, and adverse-effect reporting. It is intentionally not stubbed into the ordinary GUI, TUI, or playback path yet.
-
-## Repository map
-
-```text
-pysbagen/                    Canonical maintained Python package
-pysbagen/sleep.py           Human sleep requests and matched recipes
-pysbagen/generators/sleep.py Time-changing layered sleep synthesis
-pysbagen/sleep_cli.py       Conversational terminal Sleep Guide
-pysbagen/playback.py        Immediate streaming playback
-sleep_gui.py                Conversational desktop Sleep Guide
-pysbagen/generators/        Advanced built-in generator specifications
-pysbagen/tests/             Product-path qualification
-gui.py                      Advanced desktop studio
-visualization.py            Chladni visualization functions
-drg_decoder.py              I-Doser decoder
-sbagen-1.4.5/                Preserved original SBaGen source and examples
-docs/research/              Evidence and product-research foundations
-.beads/                     Product-train state and continuation notes
-```
-
-## Qualification
-
-Run:
-
-```bash
-pytest
-python -m pip wheel . --no-deps
-```
-
-GitHub Actions runs the test suite on Python 3.10 through 3.13 and verifies that the package can build.
-
-## Listening safety
-
-Keep playback at a comfortable volume and stop if audio causes discomfort, headache, dizziness, agitation, worsened symptoms, or other unwanted effects. PySbagen is an audio experimentation and sleep-support tool. It does not promise diagnosis, treatment, dopamine delivery, guaranteed sleep, pain relief, migraine relief, sobriety, or behavioral outcomes.
-
-Do not use sleep audio while driving, operating machinery, or doing anything that requires alertness.
-
-## License
-
-The Python package metadata declares `GPL-2.0-only`, consistent with the preserved SBaGen lineage. Before distributing binaries or derivative packages, verify that all included third-party media and dependencies have compatible licenses.
+Immediate playback:B‚˜˜\Úœ]Ûˆ[H\[œİ[YH‹–Ü^X˜XÚ×H‚˜‚‘[\ÚİÜÙ]\‚‚˜˜\Úœ]Ûˆ[H\[œİ[YH‹–Ù\ÚİÜH‚˜‚‘›Üˆ]™[ÜY[‚‚˜˜\Úœ]Ûˆ[H\[œİ[YH‹–Ù]—H‚œ]\İ˜‚”P]Y[ÈX^H™\]Z\™HÜ\˜][™Ë\Ş\İ[H]Y[ÈXÚØYÙ\Ëˆ^Ü™[XZ[œÈ]˜Z[X›HÚ]İ]]ˆÛİ[™š[H[™\ÈÛÛ[[Ûˆ›Ü›X]ÎÈ‘›\YÈ\ÈHœ›ØYİ™X[Z[™È˜[˜XÚÈ›Üˆİ\ˆØØ[HXÛÙX›H›Ü›X]Ë‚‚ˆÈÈÛY\İZYB‚˜˜\ÚœØ™ÜK\ÛY\YİZB˜‚“Ü‚‚˜˜\ÚœØ™ÜK\ÛY\œØ™ÜK\ÛY\K\^B˜‚•HİZYH\ÚÜÈÚ]\È\[š[™ËÚXÚÛİ[™ÛÜ›™Y[ÈÛ\˜X›KİÈ™\Ù[HY[ˆ^Y\œÈÚİ[™K[™İÈÛ™ÈH›İ\›™^HÚİ[™[XZ[‹‚‚’]ÚÛÜÙ\È[[Û™Î‚‚‹H
+Š”˜XÚ[™ÈZ[™\ØÙ[
+Šˆ8 %[Ü™H[š]X[[İ™[Y[[™HÛ™È™YXİ[Ûˆ[ˆ›İ™[NÂ‹H
+ŠÜ›ÜÜÚ[™ÈH™\ÚÛ
+Šˆ8 %]ZY]\ˆ\ØÙ[›ÜˆÛÛY[Û™H[™XYH™[^YÂ‹H
+Š”İ^KP\ÛY\İ\Ü
+Šˆ8 %ÚÜ\ˆ\ØÙ[[™Û™Ù\ˆİX›Hİ\Ü‚‚‘]™\H›İ]HÛÛZ[œÈ
+Š”ÛY\\ØÙ[
+Šˆ[™
+Š”ÛY\İ\Ü
+Š‹ˆHİ\œ™[˜[œÚ][Ûˆ\È[›™YH[YKˆÙ[œÛÜˆ[YÜ˜][Ûˆ\ÈØİ[Y[Y]\™HÛÜšÈ[™\È[[[Û˜[H›İ™Y[ˆÚ\™YÈ›Û™^\İ[\™Ø\™HÜˆ[™Ú[Ë‚‚‘Ù[™\˜]YÛİ[™ÛÜ›È[˜ÛYHØ\›H[XšY[˜ÙKÛİÈšYÚ]\ÚXËH˜Z[‹[ZÙH›ÛÛK[™HY\[šYÚ[š\›Û›Y[ˆ\Ù\‹\›İšYY]Y[È\È[ÛÈİ\ÜY[ˆœ›ØYHXÛÙX›H›Ü›X]È[™İ™X[\È[ˆ›İ[™YÚ[šÜË‚‚•[™\›Z[™Èš[˜]\˜[[Û˜]\˜[\ÛØÚ›ÛšXË[™\›[ÛšXÈ›Ş\İ[H^Y\œÈ\™H[™\[™[HÙ[XİX›KÚ[™ÙHİ™\ˆ[YK[™™XÙYH\š[™Èİ\ÜˆØ]™Y›İ\›™^\È[˜ÛYH[ˆ^XİœÛY\šœÛÛ˜™XÚ\K‚‚”ÙYHØÜËÔÓQTÑÕRQK›Y[™ØÜËÜ™\ÙX\˜ÚÔÓQTĞUQS×Ô‘TÑPTÒÑ“ÕS‘USÓ”Ë›Y‚‚ˆÈÈY˜[˜ÙYİY[Â‚˜˜\ÚœØ™ÜKYİZB˜‚•H[œİ[Y[HÚ[\Ù\ÈHİX\™YÜ˜\\ˆ][İÜÈÛ™H^Ü[™Û™H™]šY]È]H[YKØ\\™\ÈÈ˜[Y\È™Y›Ü™HÛÜšÙ\ˆ™XYÈİ\[™ÛÜÙ\È™\XÙYš\İX[^˜][ÛˆšYİ\™\Ë‚‚”]ZXÚÈÓH^[\\Î‚‚˜˜\ÚœØ™ÜHKX˜\ÙHŒKX™X]LKY\˜][ÛˆŒK[İ]š[HÙ\ÜÚ[Û‹Ø]‚œØ™ÜHKZ\ÛØÚ›ÛšXÈŒŒK[›Ú\ÙHLˆK[›Ú\ÙKZÚ[™[šÈKY\˜][ÛˆÌK[İ]š[H›Øİ\ËØ]‚œØ™ÜHKZ\›[ÛšXËX›ŞNHK[]\ÚXÈœÛİ[™ØØ\\ËÜ˜Z[‹™›XÈˆK[ÛÜ[]\ÚXÈKY\˜][ÛˆŒK[İ]š[H˜Z[‹\Ù\ÜÚ[Û‹Ø]‚˜‚ˆÈÈĞ‘ˆØÚY[\Â‚˜˜\ÚœØ™ÜHØÚY[\ËÙ^[\KœØ™ÈK[İ]š[HØÚY[YØ]‚˜‚‘^[\N‚‚˜^˜[NˆŒ
+ÌLÍL[šËÎœ[ÙNˆ\ÛÎŒŒŒÌÍB˜™Yˆ˜]Y[ËÜÛÙ˜Z[‹™›XËÍ‚‚““ÕÈ[H
+Ø™YNŒ[ÙH
+Ø™YO‚ŒLŒ[H
+Ø™YŒMNŒÙ™‚‚‚”ØÚY[H™Z]š[Ü‚‚‹H[ˆ[œ™Yš^Y]™[™\XÙ\ÈXİ]™HÛ™HÙ]ÎÂ‹H
+Ú[˜[YXYÈ[™Z[˜[YX™[[İ™\ÎÂ‹HÙ™˜X[™[Ù™˜ÛX\ˆ]Y[È\È\›ÜšX]NÂ‹HÚ[[˜ÙH™[XZ[œÈÛˆH[Y[[™NÂ‹Hİ[XXİ]™HÙ[™\˜]ÜœÈ™]Z[ˆ\ÙH[™š[HÜÚ][ÛˆXÜ›ÜÜÈ]™[ÎÂ‹H˜Z[[™ÈO˜Ü›ÜÜÙ˜Y\Èİ™\ˆH[[\˜[ÈH™^[YY]™[Â‹H[šÛ›İÛˆ˜[Y\È[™X[›Ü›YY˜[œÚ][ÛœÈ\™H\œ›ÜœË‚‚“İ]]\Èİ™X[YY›İYÚHØ[YKY\™XİÜH[\Ü˜\Hš[H[™]ÛZXØ[H™\XÙ\ÈH\İ[˜][ÛˆÛ›HY\ˆİXØÙ\ÜËˆH˜Z[YÜˆ[\H™[™\ˆ™\Ù\™\È[H^\İ[™Èš[K‚‚ˆÈÈ]ÛˆTB‚˜]Û‚™œ›ÛH\Ø˜YÙ[ˆ[\ÜÛY\™\]Y\İ™[™\—ÜÛY\Üš]WØ]Y[Â™œ›ÛH\Ø˜YÙ[‹œÛY\[\ÜZ[ÜÛY\Ü™XÚ\KÜš]WÜ™XÚ\WÛX[šY™\İ‚œ™\]Y\İHÛY\™\]Y\İ
+ˆ›Ø›[OHœ˜XÚ[™×ÛZ[™‹ˆÛİ[™İÛÜ›HœÛİ×ÛšYÚÛ]\ÚXÈ‹ˆ[[œÚ]OH˜˜[[˜ÙY‹ˆ\˜][Û—ÛZ[]\ÏMKŠBœ™XÚ\HHZ[ÜÛY\Ü™XÚ\J™\]Y\İ
+Bœ™\İ[HÜš]WØ]Y[Ê™[™\—ÜÛY\
+™\]Y\İ
+KœÛY\Z›İ\›™^KØ]ˆŠBÜš]WÜ™XÚ\WÛX[šY™\İ
+™XÚ\K™\İ[›İ]š[JB˜‚ˆÈÈÜ™[˜\H\ÙH[™™\ÙX\˜Ú\ÙH\™HÙ\\˜]B‚•HÛY\İZYHÙ\È›İÙXÜ™]H\ÜÚYÛˆÚ[HÜˆ›[™YÛÛ™][ÛœËˆH]\™HÙ\\˜][H][˜ÚY
+Š”™\ÙX\˜ÚÜÙH[š\›Û›Y[
+Šˆ\È™\Ù\™Y›Üˆ[™›Ü›YYÛÛœÙ[[YÚXš[]K›İØÛÛ\ÜÚYÛ›Y[^Xİ™XÚ\\Ë™KÜÜİYX\İ\™\ËY™\œÙKYY™™Xİ™\Ü[™Ë[™^Ü‚‚ˆÈÈ]X[YšXØ][Û‚‚˜˜\Úœ]\İœ]Ûˆ[HÛÛ\[X[\H\Ø˜YÙ[ˆİZKœHİZWÜØY™KœHÛY\ÙİZKœHš\İX[^˜][Û‹œH™×ÙXÛÙ\‹œBœ]Ûˆ[H\ÚY[ˆK[›ËY\Â˜‚‘Ú]XˆXİ[ÛœÈ]X[YšY\È]ÛˆËŒL8 $ÌËŒLË‚‚ˆÈÈØY™]B‚•\ÙHHÛÛY›ÜX›H›Û[YH[™İÜÛˆ\ØÛÛY›ÜXYXÚK^š[™\ÜËYÚ]][Û‹ÜˆÛÜœÙ[™YŞ[\Û\ËˆÈ›İ\ÙHÛY\]Y[ÈÚ[Hš]š[™ÈÜˆÚ[™È[\™\ÜËXÜš]XØ[ÛÜšË‚‚”TØ˜YÙ[ˆÙ\È›İ›ÛZ\ÙHXYÛ›ÜÚ\Ë™X]Y[Ü[Z[™H[]™\KİX\˜[YYÛY\Z[ˆÜˆZYÜ˜Z[™H™[YY‹ÛØœšY]KÜˆ™Z]š[Ü˜[İ]ÛÛY\ËˆÙ]™\™HÜˆ[\İX[Ş[\Û\Ë[™Ù\›İ\ÈÚ]˜]Ø[İ™\™ÜÙKÙ[‹Z\›Hš\ÚË[™\™Ù[Üš\Ù\È™\]Z\™H™X[]ÛÜ››Ù™\ÜÚ[Û˜[[Y\™Ù[˜ŞKÜˆÜš\Ú\Èİ\Ü‚‚ˆÈÈXÙ[œÙB‚•H]ÛˆXÚØYÙHY]Y]HXÛ\™\ÈÔL‹Œ[Û›XÛÛœÚ\İ[Ú]H™\Ù\™YĞ˜QÙ[ˆ[™XYÙKˆ™\šYHYYXH[™\[™[˜ŞHXÙ[œÙ\È™Y›Ü™H\İšX][Û‹‚

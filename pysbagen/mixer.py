@@ -1,76 +1,157 @@
-from typing import Generator, Iterable, List, Tuple
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Iterable, Iterator, List, Tuple
+
 import numpy as np
 
 FRAME = 1024
 SR = 44100
 
-def _pad_chunk(chunk: np.ndarray, frame_len: int) -> np.ndarray:
-    """Pad a chunk to ``frame_len`` without modifying the input."""
-    if chunk.shape[0] == frame_len:
-        return chunk
-    padded = np.zeros((frame_len, chunk.shape[1]), dtype=chunk.dtype)
-    padded[: chunk.shape[0]] = chunk
-    return padded
+
+def _stereo_float32(chunk: np.ndarray) -> np.ndarray:
+    array = np.asarray(chunk, dtype=np.float32)
+    if array.ndim == 1:
+        array = array[:, None]
+    if array.ndim != 2:
+        raise ValueError(f"Audio chunks must be one- or two-dimensional, got {array.shape}")
+    if array.shape[1] == 1:
+        array = np.repeat(array, 2, axis=1)
+    elif array.shape[1] > 2:
+        array = array[:, :2]
+    return array
 
 
-def mix_generators(gens: Iterable, duration: float) -> Generator[Tuple[np.ndarray, list], None, None]:
-    if not gens or duration <= 0:
+@dataclass
+class _StreamState:
+    iterator: Iterator
+    pending: np.ndarray = field(default_factory=lambda: np.empty((0, 2), dtype=np.float32))
+    info: dict | None = None
+    exhausted: bool = False
+
+    def read(self, frame_count: int) -> tuple[np.ndarray, dict | None, bool]:
+        pieces: list[np.ndarray] = []
+        collected = 0
+        produced_audio = False
+
+        while collected < frame_count:
+            if len(self.pending):
+                take = min(frame_count - collected, len(self.pending))
+                pieces.append(self.pending[:take])
+                self.pending = self.pending[take:]
+                collected += take
+                produced_audio = True
+                continue
+
+            if self.exhausted:
+                break
+
+            try:
+                chunk, info = next(self.iterator)
+            except StopIteration:
+                self.exhausted = True
+                continue
+
+            normalized = _stereo_float32(chunk)
+            if len(normalized) == 0:
+                continue
+            self.pending = normalized
+            self.info = info
+
+        output = np.zeros((frame_count, 2), dtype=np.float32)
+        if pieces:
+            combined = np.vstack(pieces)
+            output[: len(combined)] = combined
+        return output, self.info if produced_audio else None, produced_audio
+
+
+def mix_generators(
+    gens: Iterable, duration: float
+) -> Iterator[Tuple[np.ndarray, list[dict]]]:
+    """Mix generators for exactly ``duration`` seconds, padding exhausted streams with silence."""
+    if duration <= 0:
         return
 
-    streams = [g.generator(duration) for g in gens]
-    while True:
-        try:
-            chunks: List[np.ndarray] = []
-            infos: List[dict] = []
-            for stream in streams:
-                chunk, info = next(stream)
-                chunks.append(chunk)
-                infos.append(info)
+    specs = list(gens)
+    for spec in specs:
+        sample_rate = getattr(spec, "sample_rate", SR)
+        if sample_rate != SR:
+            raise ValueError(f"Generator sample rate {sample_rate} does not match mixer rate {SR}")
 
-            frame_len = max(chunk.shape[0] for chunk in chunks)
-            acc = np.zeros((frame_len, 2), dtype=np.float32)
-            for chunk in chunks:
-                acc += _pad_chunk(chunk.astype(np.float32), frame_len)
+    states = [_StreamState(iter(spec.generator(duration))) for spec in specs]
+    total_frames = int(SR * duration)
 
-            peak = float(np.max(np.abs(acc)))
-            if peak > 1.0:
-                acc /= peak
+    for offset in range(0, total_frames, FRAME):
+        frame_count = min(FRAME, total_frames - offset)
+        accumulator = np.zeros((frame_count, 2), dtype=np.float32)
+        infos: List[dict] = []
 
-            yield acc, infos
-        except StopIteration:
-            break
+        for state in states:
+            chunk, info, produced_audio = state.read(frame_count)
+            if produced_audio:
+                accumulator += chunk
+                if info is not None:
+                    infos.append(info)
+
+        peak = float(np.max(np.abs(accumulator))) if len(accumulator) else 0.0
+        if peak > 1.0:
+            accumulator /= peak
+        yield accumulator, infos
+
+
+def _apply_schedule_event(active: list, tone_sets: dict, names: list[str]) -> list:
+    if not names:
+        return active
+
+    if not names[0].startswith(("+", "-")):
+        active = []
+
+    for token in names:
+        lowered = token.lower()
+        if lowered in {"-", "off", "alloff"}:
+            if lowered == "alloff":
+                active = []
+            continue
+
+        operation = token[0] if token[0] in "+-" else "+"
+        name = token.lstrip("+-")
+        if name not in tone_sets:
+            raise ValueError(f"Schedule references unknown tone set: {name}")
+        selected = tone_sets[name]
+        if operation == "-":
+            active = [generator for generator in active if generator not in selected]
+        else:
+            active.extend(selected)
+    return active
+
 
 def build_session_generator(tone_sets, schedule, duration=None):
+    """Render a schedule without collapsing silent gaps or overrunning an explicit duration."""
     if not schedule:
         return
-    times = [t for t, _ in schedule]
+
+    ordered = sorted(schedule, key=lambda item: item[0])
     if duration is None:
-        duration = times[-1]
-    schedule = schedule + [(duration, ["off"])]
+        duration = float(ordered[-1][0])
+    if duration < 0:
+        raise ValueError("duration must be non-negative")
 
-    active = []
-    last = 0.0
-    for start, names in schedule:
-        seg = start - last
-        if seg > 0:
-            yield from mix_generators(active, seg)
+    active: list = []
+    cursor = 0.0
 
-        absolute = not names[0].startswith(('+', '-'))
-        if absolute:
-            active.clear()
+    for start, names in ordered:
+        start = float(start)
+        if start < cursor:
+            raise ValueError("Schedule times must be non-decreasing")
+        if start > duration:
+            break
 
-        tokens = {n.lower() for n in names}
-        if "alloff" in tokens:
-            active.clear()
+        segment_duration = start - cursor
+        if segment_duration > 0:
+            yield from mix_generators(active, segment_duration)
 
-        for n in names:
-            if n.lower() in {"-", "off", "alloff"}:
-                continue
-            clean = n.lstrip("+-")
-            if n.startswith('-'):
-                # remove by identity
-                to_remove = tone_sets.get(clean, [])
-                active = [g for g in active if g not in to_remove]
-            else:
-                active.extend(tone_sets.get(clean, []))
-        last = start
+        active = _apply_schedule_event(active, tone_sets, names)
+        cursor = start
+
+    if cursor < duration:
+        yield from mix_generators(active, duration - cursor)

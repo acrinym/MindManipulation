@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from math import gcd
 from pathlib import Path
+import shutil
+import subprocess
 
 import numpy as np
 import soundfile as sf
-from pydub import AudioSegment
 from scipy.signal import resample_poly
 
 from .base import GenBase
@@ -16,12 +17,35 @@ class FileSpec(GenBase):
     loop: bool = False
 
     def _load_mp3(self, path: Path) -> np.ndarray:
-        segment = AudioSegment.from_mp3(path)
-        segment = segment.set_frame_rate(self.sample_rate).set_channels(2)
-        raw = np.asarray(segment.get_array_of_samples())
-        data = raw.reshape((-1, 2)).astype(np.float32)
-        scale = float(1 << (8 * segment.sample_width - 1))
-        return data / scale
+        ffmpeg = shutil.which("ffmpeg")
+        if ffmpeg is None:
+            raise RuntimeError("MP3 decoding requires FFmpeg to be installed and available on PATH")
+
+        command = [
+            ffmpeg,
+            "-v",
+            "error",
+            "-i",
+            str(path),
+            "-f",
+            "f32le",
+            "-acodec",
+            "pcm_f32le",
+            "-ac",
+            "2",
+            "-ar",
+            str(self.sample_rate),
+            "pipe:1",
+        ]
+        result = subprocess.run(command, capture_output=True, check=False)
+        if result.returncode != 0:
+            detail = result.stderr.decode("utf-8", errors="replace").strip()
+            raise ValueError(f"FFmpeg could not decode {path.name}: {detail or 'unknown error'}")
+
+        samples = np.frombuffer(result.stdout, dtype="<f4")
+        if samples.size % 2:
+            raise ValueError(f"FFmpeg returned malformed stereo audio for {path.name}")
+        return samples.reshape((-1, 2)).copy()
 
     @staticmethod
     def _stereo_data(data: np.ndarray) -> np.ndarray:

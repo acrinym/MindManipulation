@@ -11,68 +11,72 @@ from scipy.signal import resample_poly
 from .base import GenBase
 
 
+def _decode_with_ffmpeg(path: Path, sample_rate: int) -> np.ndarray:
+    ffmpeg = shutil.which("ffmpeg")
+    if ffmpeg is None:
+        raise RuntimeError(
+            f"Decoding {path.suffix or 'this audio format'} requires FFmpeg to be installed and available on PATH"
+        )
+    command = [
+        ffmpeg,
+        "-v", "error",
+        "-i", str(path),
+        "-f", "f32le",
+        "-acodec", "pcm_f32le",
+        "-ac", "2",
+        "-ar", str(sample_rate),
+        "pipe:1",
+    ]
+    result = subprocess.run(command, capture_output=True, check=False)
+    if result.returncode != 0:
+        detail = result.stderr.decode("utf-8", errors="replace").strip()
+        raise ValueError(f"FFmpeg could not decode {path.name}: {detail or 'unknown error'}")
+    samples = np.frombuffer(result.stdout, dtype="<f4")
+    if samples.size % 2:
+        raise ValueError(f"FFmpeg returned malformed stereo audio for {path.name}")
+    return samples.reshape((-1, 2)).copy()
+
+
+def _stereo_data(data: np.ndarray) -> np.ndarray:
+    if data.ndim == 1:
+        data = data[:, None]
+    if data.ndim != 2:
+        raise ValueError(f"Audio data must be one- or two-dimensional, got {data.shape}")
+    if data.shape[1] == 1:
+        return np.repeat(data, 2, axis=1)
+    return data[:, :2]
+
+
+def load_audio(path_value: str | Path, sample_rate: int = 44100) -> np.ndarray:
+    """Load any audio format supported by SoundFile or the local FFmpeg installation."""
+    path = Path(path_value).expanduser()
+    if not path.is_file():
+        raise FileNotFoundError(f"Audio file not found: {path}")
+
+    try:
+        data, rate = sf.read(path, dtype="float32", always_2d=True)
+    except (RuntimeError, TypeError, ValueError):
+        return _decode_with_ffmpeg(path, sample_rate)
+
+    data = _stereo_data(data)
+    if rate != sample_rate:
+        factor = gcd(rate, sample_rate)
+        data = resample_poly(
+            data,
+            sample_rate // factor,
+            rate // factor,
+            axis=0,
+        ).astype(np.float32)
+    return data.astype(np.float32, copy=False)
+
+
 @dataclass
 class FileSpec(GenBase):
     path: str = ""
     loop: bool = False
 
-    def _load_mp3(self, path: Path) -> np.ndarray:
-        ffmpeg = shutil.which("ffmpeg")
-        if ffmpeg is None:
-            raise RuntimeError("MP3 decoding requires FFmpeg to be installed and available on PATH")
-
-        command = [
-            ffmpeg,
-            "-v",
-            "error",
-            "-i",
-            str(path),
-            "-f",
-            "f32le",
-            "-acodec",
-            "pcm_f32le",
-            "-ac",
-            "2",
-            "-ar",
-            str(self.sample_rate),
-            "pipe:1",
-        ]
-        result = subprocess.run(command, capture_output=True, check=False)
-        if result.returncode != 0:
-            detail = result.stderr.decode("utf-8", errors="replace").strip()
-            raise ValueError(f"FFmpeg could not decode {path.name}: {detail or 'unknown error'}")
-
-        samples = np.frombuffer(result.stdout, dtype="<f4")
-        if samples.size % 2:
-            raise ValueError(f"FFmpeg returned malformed stereo audio for {path.name}")
-        return samples.reshape((-1, 2)).copy()
-
-    @staticmethod
-    def _stereo_data(data: np.ndarray) -> np.ndarray:
-        if data.ndim == 1:
-            data = data[:, None]
-        if data.shape[1] == 1:
-            return np.repeat(data, 2, axis=1)
-        return data[:, :2]
-
     def _load(self) -> np.ndarray:
-        path = Path(self.path).expanduser()
-        if not path.is_file():
-            raise FileNotFoundError(f"Audio file not found: {path}")
-        if path.suffix.lower() == ".mp3":
-            return self._load_mp3(path)
-
-        data, rate = sf.read(path, dtype="float32", always_2d=True)
-        data = self._stereo_data(data)
-        if rate != self.sample_rate:
-            factor = gcd(rate, self.sample_rate)
-            data = resample_poly(
-                data,
-                self.sample_rate // factor,
-                rate // factor,
-                axis=0,
-            ).astype(np.float32)
-        return data
+        return load_audio(self.path, self.sample_rate)
 
     def generator(self, duration: float):
         data = self._load()

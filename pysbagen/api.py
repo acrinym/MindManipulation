@@ -10,6 +10,7 @@ import soundfile as sf
 from .generators import FileSpec, HarmonicBoxSpec, IsochronicSpec, NoiseSpec, ToneSpec
 from .mixer import SR, build_session_generator, mix_generators
 from .parser import parse_sbg
+from .sleep import SleepRequest, build_sleep_spec
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,10 @@ def render_specs(specs: Iterable, duration: float):
 def render_schedule(path: str | Path, duration: float | None = None):
     tone_sets, schedule = parse_sbg(path)
     return build_session_generator(tone_sets, schedule, duration)
+
+
+def render_sleep(request: SleepRequest):
+    return render_specs([build_sleep_spec(request)], request.duration_seconds)
 
 
 def build_quick_specs(

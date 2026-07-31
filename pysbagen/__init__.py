@@ -10,6 +10,7 @@ from .api import (
 )
 from .compatibility import CompatibilityState, ImportReport, RenderDisposition
 from .importers import ImportedArtifact, import_artifact, import_drg, import_sbg
+from .interoperability import EngineDiscrepancy, InteroperabilityReport, inspect_with_sbagenx
 from .sbagenx_backend import BackendCapability, SBaGenXProbe, probe_sbagenx
 from .sbagenx_native import (
     NativeDiagnostic,
@@ -19,13 +20,16 @@ from .sbagenx_native import (
     UnsupportedSBaGenXAPI,
     validate_sbagenx_source,
 )
+from .sbgf import import_sbgf
 from .sleep import SleepLayers, SleepRecipe, SleepRequest, build_sleep_recipe
 
 __all__ = [
     "BackendCapability",
     "CompatibilityState",
+    "EngineDiscrepancy",
     "ImportReport",
     "ImportedArtifact",
+    "InteroperabilityReport",
     "NativeDiagnostic",
     "NativeValidationReport",
     "RenderDisposition",
@@ -41,7 +45,9 @@ __all__ = [
     "import_artifact",
     "import_drg",
     "import_sbg",
+    "import_sbgf",
     "inspect_artifact",
+    "inspect_with_sbagenx",
     "probe_sbagenx",
     "render_schedule",
     "render_sleep",

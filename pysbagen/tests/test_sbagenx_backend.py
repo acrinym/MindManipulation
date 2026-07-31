@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
-from pysbagen.sbagenx_backend import _probe_library, probe_sbagenx
+from pysbagen.sbagenx_backend import _probe_executable, _probe_library, probe_sbagenx
 
 
 class _FakeFunction:
@@ -38,6 +39,26 @@ def test_probe_library_reports_version_api_and_symbols():
     assert warning is None
     assert capabilities
     assert all(capability.available for capability in capabilities)
+
+
+def test_probe_executable_uses_help_banner(monkeypatch):
+    observed = {}
+
+    def fake_run(command, **kwargs):
+        observed["command"] = command
+        return SimpleNamespace(
+            returncode=0,
+            stdout="SBaGenX - Sequenced Brainwave Generator, version 3.9.0-alpha.15\nmore help\n",
+            stderr="",
+        )
+
+    monkeypatch.setattr("pysbagen.sbagenx_backend.subprocess.run", fake_run)
+
+    version, warning = _probe_executable("sbagenx")
+
+    assert observed["command"] == ["sbagenx", "-h"]
+    assert version == "3.9.0-alpha.15"
+    assert warning is None
 
 
 def test_probe_can_record_explicit_paths_without_loading(tmp_path: Path):

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from .compatibility import RenderDisposition
@@ -9,6 +10,7 @@ from .importers import import_artifact
 from .inspector import build_timeline, inspect_audio_source, qualify_audio_path, timeline_to_dict, timeline_to_text
 from .library import LocalLibrary
 from .sbagenx_backend import probe_sbagenx
+from .sbagenx_native import SBaGenXNativeError, validate_sbagenx_source
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -36,10 +38,11 @@ def build_parser() -> argparse.ArgumentParser:
     path_parser.add_argument("--bluetooth", action="store_true")
     path_parser.add_argument("--json", action="store_true", dest="as_json")
     path_parser.add_argument("--save")
-    backend_parser = subparsers.add_parser("backend", help="Discover and qualify an optional SBaGenX executable/native library")
+    backend_parser = subparsers.add_parser("backend", help="Discover, qualify, or validate through an optional SBaGenX native library")
     backend_parser.add_argument("--executable", help="Explicit SBaGenX executable path; otherwise use SBAGENX_BIN/PATH")
     backend_parser.add_argument("--library", help="Explicit sbagenxlib path; otherwise use SBAGENXLIB_PATH/system lookup")
     backend_parser.add_argument("--discover-only", action="store_true", help="Locate candidates without executing or loading them")
+    backend_parser.add_argument("--validate", metavar="SOURCE", help="Validate a .sbg or .sbgf source through qualified API 47")
     backend_parser.add_argument("--json", action="store_true", dest="as_json")
     library_parser = subparsers.add_parser("library", help="Inspect or verify the local-first library")
     library_parser.add_argument("action", choices=["list", "show", "verify", "archive", "export"])
@@ -67,6 +70,17 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Saved path qualification: {Path(args.save).resolve()}")
         return 0 if report.safe_to_start else 2
     if args.command == "backend":
+        if args.validate:
+            if args.discover_only:
+                print("--discover-only cannot be combined with --validate", file=sys.stderr)
+                return 2
+            try:
+                report = validate_sbagenx_source(args.validate, library=args.library)
+            except (OSError, ValueError, SBaGenXNativeError) as exc:
+                print(f"SBaGenX native validation failed: {exc}", file=sys.stderr)
+                return 2
+            print(json.dumps(report.to_dict(), indent=2, sort_keys=True) if args.as_json else report.to_text())
+            return 0 if report.valid else 2
         report = probe_sbagenx(
             executable=args.executable,
             library=args.library,

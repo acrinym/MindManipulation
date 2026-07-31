@@ -76,7 +76,7 @@ SBaGenX remains optional. The Python renderer remains the portable fallback and 
 
 ## Implementation delivered on the active branch
 
-### Backend discovery
+### Backend discovery and qualification
 
 - `pysbagen/sbagenx_backend.py`
 - `sbgpy-inspect backend`
@@ -85,14 +85,44 @@ SBaGenX remains optional. The Python renderer remains the portable fallback and 
 ### Typed native validation
 
 - `pysbagen/sbagenx_native.py`
-- `sbgpy-inspect backend --validate SOURCE`
 - exact API-47 ctypes signatures and diagnostic layout
-- fail-closed unknown-API and missing-symbol behavior
+- fail-closed unknown-API, missing-symbol, malformed-pointer, and false-banner behavior
 - immutable source byte count and SHA-256
 - SBG/SBGF diagnostics with severity, code, location, range, and message
 - native library/version/API identity in deterministic reports
 
-Native rendering remains deliberately disabled. It waits for render/context/writer bindings, dual-engine discrepancy reports, parity fixtures, explicit backend policy, and complete provenance sidecars.
+### Combined compatibility truth
+
+- `pysbagen/interoperability.py`
+- `sbgpy-inspect backend --validate SOURCE`
+- PySbagen compatibility disposition and SBaGenX validity remain separate
+- exact-source identity comparison
+- explicit discrepancies for cross-engine acceptance/rejection and semantic differences
+- native success cannot erase PySbagen blockers, missing sources, unsupported states, or approximations
+
+### First-class SBGF preservation
+
+- `pysbagen/sbgf.py`
+- ordinary `sbgpy-inspect inspect SOURCE.sbgf`
+- immutable bytes/hash/encoding
+- parameters, solve directives, assignments, function inventory, media dependencies, and unknown-line preservation
+- local content-addressed library storage and offline verification
+- explicit `inspection-only` state and native-runtime requirement
+- no invented replacement curve language or fake SBG timeline
+
+## Next implementation bead
+
+**SBX-006 — Optional native render backend with receipts** is next.
+
+Native rendering remains deliberately disabled until the same change delivers:
+
+- exact typed context/render/writer bindings and cleanup;
+- representative parity/discrepancy fixtures;
+- explicit `python`, `sbagenx`, and capability-gated `auto` policy;
+- source/backend/API/configuration/output-hash receipts;
+- preserved Python fallback and guided-product behavior.
+
+The current implementation passed Python 3.10–3.13 qualification with **59 tests** and a successful source distribution/wheel build.
 
 ## Creativity status
 

@@ -120,6 +120,8 @@ def parse_sbg_from_string(source: str, base_dir: str | Path | None = None) -> tu
                 label = label.strip()
                 if not label:
                     raise ValueError("Tone-set label cannot be empty")
+                if label in tone_sets:
+                    raise ValueError(f"Duplicate tone-set label: {label}")
                 parts = shlex.split(rest, comments=True, posix=True)
                 tone_sets[label] = [component for part in parts if (component := parse_tone_component(part, resolved_base)) is not None]
                 continue
@@ -150,5 +152,13 @@ def parse_sbg_from_string(source: str, base_dir: str | Path | None = None) -> tu
 
 def parse_sbg(path: str | Path):
     schedule_path = Path(path).expanduser().resolve()
-    with schedule_path.open("r", encoding="latin-1") as handle:
-        return parse_sbg_from_string(handle.read(), base_dir=schedule_path.parent)
+    data = schedule_path.read_bytes()
+    for encoding in ("utf-8-sig", "utf-8", "latin-1"):
+        try:
+            source = data.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            continue
+    else:
+        source = data.decode("latin-1")
+    return parse_sbg_from_string(source, base_dir=schedule_path.parent)

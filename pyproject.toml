@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pysbagen"
-version = "0.3.0"
-description = "Layered sleep-audio guide and modern SBaGen-compatible session studio"
+version = "0.4.0"
+description = "Local-first SBaGen/DRG compatibility inspector and layered audio studio"
 readme = "README.md"
 license = {text = "GPL-2.0-only"}
 authors = [{name="Justin (acrinym)"}]
@@ -25,6 +25,8 @@ desktop = ["matplotlib>=3.8", "pillow>=10", "pyaudio>=0.2.14"]
 [project.scripts]
 sbgpy = "pysbagen.cli:main"
 sbgpy-gui = "gui_safe:main"
+sbgpy-inspect = "pysbagen.inspect_cli:main"
+sbgpy-inspect-gui = "inspect_gui:main"
 sbgpy-sleep = "pysbagen.sleep_cli:main"
 sbgpy-sleep-gui = "sleep_gui:main"
 
@@ -32,7 +34,7 @@ sbgpy-sleep-gui = "sleep_gui:main"
 # Third parties can register generator plugins in this group.
 
 [tool.setuptools]
-py-modules = ["gui", "gui_safe", "sleep_gui", "visualization", "drg_decoder"]
+py-modules = ["gui", "gui_safe", "inspect_gui", "sleep_gui", "visualization", "drg_decoder"]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -42,3 +44,6 @@ exclude = ["pysbagen.src", "pysbagen.src.*", "pysbagen.tests", "pysbagen.tests.*
 [tool.pytest.ini_options]
 testpaths = ["pysbagen/tests"]
 addopts = "-q"
+
+[tool.setuptools.package-data]
+pysbagen = ["data/*.json"]

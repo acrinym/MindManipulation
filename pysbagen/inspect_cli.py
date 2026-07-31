@@ -82,7 +82,11 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"SBaGenX interoperability validation failed: {exc}", file=sys.stderr)
                 return 2
             print(json.dumps(report.to_dict(), indent=2, sort_keys=True) if args.as_json else report.to_text())
-            return 0 if report.source_identity_matches and report.native_valid else 2
+            if not report.source_identity_matches or not report.native_valid:
+                return 2
+            if report.discrepancies or report.pysbagen_disposition is not RenderDisposition.SAFE:
+                return 1
+            return 0
         report = probe_sbagenx(
             executable=args.executable,
             library=args.library,

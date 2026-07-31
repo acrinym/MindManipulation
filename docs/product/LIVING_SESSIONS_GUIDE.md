@@ -1,6 +1,6 @@
 # PySbagen Living Sessions Guide
 
-**Status:** Initial product foundation  
+**Status:** Wave 1 qualified  
 **Command:** `sbgpy-session`  
 **Storage:** Local-only by default
 
@@ -64,12 +64,19 @@ The command:
 
 1. loads the immutable plan;
 2. reconstructs and validates the stored `SleepRequest`;
-3. renders through the current Python backend;
-4. writes the normal exact sleep recipe manifest;
-5. hashes the output;
-6. appends a render event containing recipe, backend, and output identity.
+3. enforces the declared backend policy;
+4. renders only through a currently qualified backend;
+5. writes the normal exact sleep recipe manifest;
+6. hashes the output;
+7. appends a render event containing recipe, backend, reason, and output identity.
 
-The plan may declare `python`, `sbagenx`, or `auto` as its future backend policy. The current Living Sessions render command uses the Python backend until the SBaGenX native-render train is qualified. It records the actual backend honestly.
+Backend behavior in Wave 1:
+
+- `python` — renders through the qualified portable Python backend and records that explicit policy;
+- `auto` — selects Python while native rendering remains unqualified and records the selection reason;
+- `sbagenx` — fails closed instead of silently rendering through Python.
+
+A native-required plan becomes renderable only after the typed SBaGenX render/context/writer and receipt train is qualified.
 
 ## Mark a memorable echo
 
@@ -141,7 +148,7 @@ Changes exactly one disclosed dimension. This is the preferred mode for learning
 
 ### Contrast
 
-Changes one high-salience dimension. Automatic mode selects contrast after an uncomfortable or low-rated outcome.
+Changes exactly one high-salience audible product dimension. Seed-only novelty is excluded whenever an audible contrast is available. Automatic mode selects contrast after an uncomfortable or low-rated outcome.
 
 ### Wander
 
@@ -212,6 +219,19 @@ Each session directory contains:
 - otherwise → branch.
 
 These rules are visible in code and can be explained from the local record. There is no hidden model or remote scoring service.
+
+## Qualification receipt
+
+Wave 1 passed GitHub Actions Python qualification run `#57`:
+
+- Python 3.10 — passed;
+- Python 3.11 — passed;
+- Python 3.12 — passed;
+- Python 3.13 — passed;
+- complete repository result — **68 tests passed**;
+- source distribution and wheel build — passed;
+- wheel contains `living_sessions.py`, `living_session_policy.py`, and `session_cli.py`;
+- modern SPDX license metadata builds without the prior setuptools license-table warning.
 
 ## What this deliberately avoids
 

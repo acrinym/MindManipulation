@@ -13,6 +13,7 @@ from pysbagen.living_sessions import (
     recommend_child_mode,
     sleep_request_from_manifest,
 )
+from pysbagen.session_cli import main as session_main
 from pysbagen.sleep import SleepRequest
 
 
@@ -81,6 +82,19 @@ def test_wander_combines_no_more_than_two_disclosed_changes():
     assert child.experimental
     assert 1 <= len(child.mutations) <= 2
     assert len({item.key for item in child.mutations}) == len(child.mutations)
+    sleep_request_from_manifest(child.recipe_manifest).validate()
+
+
+def test_contrast_uses_one_audible_product_dimension():
+    root = create_sleep_plan(_request(), created_at="2026-07-31T19:00:00+00:00")
+    child = create_child_sleep_plan(
+        root,
+        mode="contrast",
+        created_at="2026-07-31T19:04:00+00:00",
+    )
+
+    assert len(child.mutations) == 1
+    assert child.mutations[0].key != "request.seed"
     sleep_request_from_manifest(child.recipe_manifest).validate()
 
 
@@ -178,3 +192,17 @@ def test_outcome_is_immutable(tmp_path: Path):
                 comfort="uncomfortable",
             )
         )
+
+
+def test_native_required_plan_refuses_python_render(tmp_path: Path):
+    archive_root = tmp_path / "living"
+    archive = LivingSessionArchive(archive_root)
+    root = create_sleep_plan(
+        _request(),
+        backend_policy="sbagenx",
+        created_at="2026-07-31T19:00:00+00:00",
+    )
+    archive.create(root)
+
+    with pytest.raises(SystemExit, match="requires SBaGenX"):
+        session_main(["--root", str(archive_root), "render", root.session_id])

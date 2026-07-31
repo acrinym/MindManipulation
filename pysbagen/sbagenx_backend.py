@@ -33,21 +33,35 @@ class SBaGenXProbe:
     warnings: list[str] = field(default_factory=list)
 
     @property
-    def available(self) -> bool:
+    def candidate_found(self) -> bool:
         return bool(self.executable_path or self.library_path)
 
     @property
     def native_api_available(self) -> bool:
         return self.api_version is not None
 
+    @property
+    def usable(self) -> bool:
+        return bool(self.executable_version or self.native_api_available)
+
+    @property
+    def available(self) -> bool:
+        """Backward-friendly alias for a backend that passed identity probing."""
+
+        return self.usable
+
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
-        payload["available"] = self.available
+        payload["candidate_found"] = self.candidate_found
         payload["native_api_available"] = self.native_api_available
+        payload["usable"] = self.usable
+        payload["available"] = self.available
         return payload
 
     def to_text(self) -> str:
         lines = ["SBaGenX backend probe"]
+        lines.append(f"Candidate found: {'yes' if self.candidate_found else 'no'}")
+        lines.append(f"Usable backend: {'yes' if self.usable else 'no'}")
         lines.append(f"Executable: {self.executable_path or 'not found'}")
         if self.executable_version:
             lines.append(f"Executable version: {self.executable_version}")
@@ -99,6 +113,9 @@ def _find_executable(explicit: str | os.PathLike[str] | None) -> str | None:
 def _find_library(explicit: str | os.PathLike[str] | None) -> str | None:
     candidate = _normalize_candidate(explicit) or _normalize_candidate(os.getenv("SBAGENXLIB_PATH"))
     if candidate:
+        path = Path(candidate)
+        if path.is_absolute() or path.parent != Path("."):
+            return str(path.resolve()) if path.is_file() else None
         return candidate
     for name in ("sbagenx", "sbagenxlib"):
         discovered = ctypes.util.find_library(name)
@@ -150,7 +167,7 @@ def _probe_library(
 ) -> tuple[str | None, int | None, list[BackendCapability], str | None]:
     try:
         library = loader(path)
-    except OSError as exc:
+    except (OSError, TypeError) as exc:
         return None, None, [], f"Could not load SBaGenX library: {exc}"
 
     library_version: str | None = None
@@ -202,10 +219,17 @@ def probe_sbagenx(
     selected backend to provenance/render receipts.
     """
 
+    requested_executable = _normalize_candidate(executable) or _normalize_candidate(os.getenv("SBAGENX_BIN"))
+    requested_library = _normalize_candidate(library) or _normalize_candidate(os.getenv("SBAGENXLIB_PATH"))
     report = SBaGenXProbe(
         executable_path=_find_executable(executable),
         library_path=_find_library(library),
     )
+
+    if requested_executable and not report.executable_path:
+        report.warnings.append(f"Configured SBaGenX executable was not found: {requested_executable}")
+    if requested_library and not report.library_path:
+        report.warnings.append(f"Configured SBaGenX library was not found: {requested_library}")
 
     if report.executable_path and query_executable:
         version, warning = _probe_executable(report.executable_path)
@@ -221,9 +245,11 @@ def probe_sbagenx(
         if warning:
             report.warnings.append(warning)
 
-    if not report.available:
+    if not report.candidate_found:
         report.warnings.append(
             "SBaGenX was not found. Install it separately or set SBAGENX_BIN/SBAGENXLIB_PATH; "
             "PySbagen's existing Python backend remains available."
         )
+    elif (query_executable or load_library) and not report.usable:
+        report.warnings.append("SBaGenX candidates were found, but none passed identity qualification.")
     return report

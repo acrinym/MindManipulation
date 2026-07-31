@@ -74,7 +74,8 @@ def main(argv: list[str] | None = None) -> int:
             load_library=not args.discover_only,
         )
         print(json.dumps(report.to_dict(), indent=2, sort_keys=True) if args.as_json else report.to_text())
-        return 0 if report.available else 2
+        qualified = report.candidate_found if args.discover_only else report.usable
+        return 0 if qualified else 2
     if args.command == "library":
         return _library_command(args)
     raise AssertionError(f"Unhandled command: {args.command}")

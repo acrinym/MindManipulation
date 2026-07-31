@@ -195,6 +195,7 @@ def choose_render_disposition(
             CompatibilityState.UNSUPPORTED,
             CompatibilityState.UNKNOWN,
             CompatibilityState.MISSING_SOURCE,
+            CompatibilityState.INTENTIONALLY_EXCLUDED,
         }
     ):
         return RenderDisposition.INSPECTION_ONLY
@@ -204,7 +205,6 @@ def choose_render_disposition(
         {
             CompatibilityState.PARTIAL,
             CompatibilityState.APPROXIMATED,
-            CompatibilityState.EQUIVALENT,
         }
     ):
         return RenderDisposition.SAFE_WITH_DISCLOSED_CHANGES

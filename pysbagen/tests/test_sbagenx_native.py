@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import ctypes
+import hashlib
 from pathlib import Path
 
 import pytest
 
 from pysbagen.sbagenx_native import (
     SBaGenXNative,
+    SBaGenXNativeError,
     UnsupportedSBaGenXAPI,
     _SbxDiagnostic,
     validate_sbagenx_source,
@@ -24,8 +26,14 @@ class _FakeFunction:
 
 
 class _FakeLibrary:
-    def __init__(self, api_version: int = 47, with_diagnostic: bool = True):
+    def __init__(
+        self,
+        api_version: int = 47,
+        with_diagnostic: bool = True,
+        null_diagnostic_pointer: bool = False,
+    ):
         self._diagnostic_array = None
+        self._null_diagnostic_pointer = null_diagnostic_pointer
         self.sbx_version = _FakeFunction(lambda: b"3.9.0-alpha.15")
         self.sbx_api_version = _FakeFunction(lambda: api_version)
         self.sbx_validate_sbg_text = _FakeFunction(
@@ -45,6 +53,9 @@ class _FakeLibrary:
         if not with_diagnostic:
             count_pointer[0] = 0
             return 0
+        count_pointer[0] = 1
+        if self._null_diagnostic_pointer:
+            return 0
         array = (_SbxDiagnostic * 1)()
         array[0].severity = 2
         array[0].code = b"native-warning"
@@ -55,7 +66,6 @@ class _FakeLibrary:
         array[0].message = b"Synthetic native diagnostic"
         self._diagnostic_array = array
         diagnostic_pointer[0] = ctypes.cast(array, ctypes.POINTER(_SbxDiagnostic))
-        count_pointer[0] = 1
         return 0
 
 
@@ -78,9 +88,20 @@ def test_native_binding_rejects_unknown_api_revision():
         SBaGenXNative("fake", loader=lambda _: _FakeLibrary(api_version=48))
 
 
+def test_native_binding_rejects_null_diagnostic_pointer():
+    native = SBaGenXNative(
+        "fake",
+        loader=lambda _: _FakeLibrary(null_diagnostic_pointer=True),
+    )
+
+    with pytest.raises(SBaGenXNativeError, match="null diagnostic pointer"):
+        native.validate_text("NOW tone", "fixture.sbg", "sbg")
+
+
 def test_validate_source_preserves_encoding_and_identity(tmp_path: Path):
     source = tmp_path / "latin1.sbg"
-    source.write_bytes("# café\nNOW off\n".encode("latin-1"))
+    source_bytes = "# café\nNOW off\n".encode("latin-1")
+    source.write_bytes(source_bytes)
 
     report = validate_sbagenx_source(
         source,
@@ -91,6 +112,8 @@ def test_validate_source_preserves_encoding_and_identity(tmp_path: Path):
     assert report.valid
     assert report.source_kind == "sbg"
     assert report.source_encoding == "latin-1"
+    assert report.source_size == len(source_bytes)
+    assert report.source_sha256 == hashlib.sha256(source_bytes).hexdigest()
     assert report.api_version == 47
     assert report.library_version == "3.9.0-alpha.15"
     assert report.diagnostics == []

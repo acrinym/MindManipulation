@@ -24,6 +24,7 @@ from .living_sessions import (
     recommend_child_mode,
     sleep_request_from_manifest,
 )
+from .living_session_policy import install_living_session_policy
 from .sbagenx_backend import BackendCapability, SBaGenXProbe, probe_sbagenx
 from .sbagenx_native import (
     NativeDiagnostic,
@@ -35,6 +36,8 @@ from .sbagenx_native import (
 )
 from .sbgf import import_sbgf
 from .sleep import SleepLayers, SleepRecipe, SleepRequest, build_sleep_recipe
+
+install_living_session_policy()
 
 __all__ = [
     "AffectSnapshot",

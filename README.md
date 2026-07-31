@@ -1,15 +1,18 @@
 # MindManipulation / PySbagen
 
-PySbagen is a local layered-audio product with two front doors:
+PySbagen is a local-first SBaGen/DRG compatibility inspector, layered-audio studio, and guided sleep-audio product.
 
-- **Sleep Guide**: answer ordinary questions and receive a matched, gradually fading audio journey.
-- **Advanced Studio**: build SBaGen schedules, binaural, monaural, isochronic, Harmonic Box X-style, noise, music, I-Doser, and visualization sessions.
+Its compatibility rule is direct:
 
-Its first complete human use case is sleep difficulty:
+> Inspect imported schedules honestly before playback or conversion. Preserve what is present, disclose what changes, and never call an incomplete import successful merely because it produces sound.
 
-- "My mind will not stop."
-- "I feel relaxed, but cannot cross into sleep."
-- "I fall asleep, then keep waking back up."
+## Product front doors
+
+- **Compatibility Inspector** — inspect SBG/DRG files, preserve DRG packages, view timelines, qualify audio sources and listening routes, and store provenance offline.
+- **Sleep Guide** — answer ordinary questions and receive a matched, gradually fading audio journey.
+- **Advanced Studio** — build and render SBaGen schedules, binaural, monaural, isochronic, Harmonic Box X-style, noise, music, and visualization sessions.
+
+Creativity-audio implementation remains deferred. Version 0.4.0 focuses on I-Doser/SBaGen compatibility, preservation, inspection, and ordinary-user reliability.
 
 ## Install
 
@@ -37,66 +40,149 @@ Full desktop setup:
 python -m pip install -e ".[desktop]"
 ```
 
-For development:
+Development:
 
 ```bash
 python -m pip install -e ".[dev]"
 pytest
 ```
 
-PyAudio can require operating-system audio packages. Export remains available without it. SoundFile handles common formats; FFmpeg is the broad streaming fallback for other locally decodable formats.
+Inspection and export remain available without PyAudio. SoundFile handles common formats; FFmpeg and ffprobe are broad local fallbacks when installed.
+
+## Compatibility Inspector
+
+Desktop:
+
+```bash
+sbgpy-inspect-gui
+```
+
+Terminal:
+
+```bash
+sbgpy-inspect inspect schedules/example.sbg
+sbgpy-inspect inspect owned-dose.drg --preserve-to preserved/owned-dose
+sbgpy-inspect inspect schedules/example.sbg --json
+```
+
+Every import records:
+
+- immutable source size and SHA-256 identity;
+- source type, encoding, and version clues;
+- DRG package elements in original order;
+- metadata, embedded image, nested schedule, and opaque elements;
+- supported, equivalent, partial, approximated, unsupported, unknown, missing-source, rendered-only, unsafe-to-render, and intentionally-excluded findings;
+- start mode, end behavior, inferred duration, and loop behavior;
+- exact reasons playback or rendering is permitted, disclosed, inspection-only, or blocked.
+
+Render dispositions:
+
+- `safe` — proceed normally;
+- `safe-with-disclosed-changes` — inspect and explicitly accept partial or approximated behavior;
+- `inspection-only` — preserve and inspect without a complete render claim;
+- `blocked` — malformed or unsafe content cannot render.
+
+Open-ended schedules require an explicit duration:
+
+```bash
+sbgpy open-ended.sbg --duration 1800 --outfile session.wav
+```
+
+Approximated historical constructs require acknowledgement:
+
+```bash
+sbgpy legacy-slide.sbg \
+  --duration 600 \
+  --allow-disclosed-changes \
+  --outfile disclosed.wav
+```
+
+Schedule renders automatically receive `OUTPUT.wav.pysbagen.json`, containing the source import report, output hash, exact duration, peak, disclosed changes, and any attached listening-path qualification.
+
+See:
+
+- `docs/compatibility/COMPATIBILITY_INSPECTOR_GUIDE.md`
+- `docs/compatibility/SBAGEN_SEMANTIC_COMPATIBILITY_MATRIX.md`
+
+## DRG preservation
+
+PySbagen preserves the original DRG bytes and every decoded element rather than returning only a schedule/image tuple. A preservation bundle includes:
+
+- immutable source `.drg`;
+- element files in original order;
+- encoded, decoded, and decrypted hashes;
+- recovered schedule and image when available;
+- unknown opaque elements;
+- metadata and warnings;
+- provenance linking every derivative to the original DRG hash.
+
+Only lawfully possessed or legally distributable files should be imported. Proprietary I-Doser content is not bundled or redistributed.
+
+## Timeline and source inspection
+
+The toolkit-independent timeline model shows chronological events, active tone sets, layers, silence, transitions, file sources, parameters, and open-ended spans. It is produced from canonical parsed data, not display-string reparsing.
+
+Qualify a source:
+
+```bash
+sbgpy-inspect source soundscapes/rain.flac
+```
+
+The bounded-memory analyzer reports container/codec, channels, sample rate, duration, peak, clipping, stereo correlation, near-mono state, and disclosed resampling.
+
+Qualify a listening route:
+
+```bash
+sbgpy-inspect path \
+  --method binaural \
+  --route headphones \
+  --channels 2 \
+  --sample-rate 44100 \
+  --save path-qualification.json
+```
+
+Attach it to a render manifest:
+
+```bash
+sbgpy schedules/example.sbg \
+  --outfile scheduled.wav \
+  --path-qualification path-qualification.json
+```
+
+PySbagen distinguishes direct measurements from declared external processing. It does not claim to detect operating-system spatial enhancement, normalization, Bluetooth processing, or equalization when it cannot observe them.
+
+## Local-first provenance library
+
+```bash
+sbgpy-inspect inspect schedules/example.sbg --add-to-library
+sbgpy-inspect library list
+sbgpy-inspect library show SHA256_ID
+sbgpy-inspect library verify SHA256_ID
+sbgpy-inspect library export SHA256_ID --destination backup-manifest.json
+sbgpy-inspect library archive SHA256_ID
+```
+
+Library records distinguish recipes, packages, extracted elements, rendered audio relationships, missing sources, incompatible items, archived items, and superseded items. Duplicate bytes share canonical content identity while retaining distinct provenance records. No account or cloud service is required.
 
 ## Sleep Guide
 
-Open the desktop guide:
-
 ```bash
 sbgpy-sleep-gui
-```
-
-Or use the terminal guide:
-
-```bash
 sbgpy-sleep
 sbgpy-sleep --play
 ```
 
-The guide asks:
+The guide asks what is keeping the person awake, which sound world is tolerable, how present the layers should feel, and how long the journey should remain. It chooses among Racing Mind Descent, Crossing the Threshold, and Stay-Asleep Support. Every route contains a Sleep Descent phase and a quieter Sleep Support phase.
 
-1. What is keeping you awake?
-2. What sound world feels tolerable or pleasant tonight?
-3. How present should the underlying layers feel?
-4. How long should the journey remain?
+Generated sound worlds include warm ambience, slow night music, a rain-like room, and a deep-night environment. User-provided audio is supported in broadly decodable formats and streams in bounded chunks. Saved journeys include an exact `.sleep.json` recipe.
 
-It chooses among three materially different routes:
-
-- **Racing Mind Descent**: more initial movement followed by a long reduction in novelty.
-- **Crossing the Threshold**: a quieter descent for someone already relaxed.
-- **Stay-Asleep Support**: a shorter descent and longer stable support period.
-
-Every route contains a **Sleep Descent** phase and a quieter **Sleep Support** phase. The current transition is planned by time. Sensor integration remains documented future work and has intentionally not been wired to nonexistent hardware or endpoints.
-
-Generated sound worlds include warm ambience, slow night music, a rain-like room, and a deep-night environment. User-provided audio is also supported in broadly decodable formats and streams in bounded chunks instead of being loaded or tiled into a session-sized array.
-
-Underlying binaural, monaural, isochronic, and Harmonic Box X-style layers are independently selectable, change over time, and recede during support. Saved journeys include an exact `.sleep.json` recipe.
-
-See:
-
-- `docs/SLEEP_GUIDE.md`
-- `docs/research/SLEEP_AUDIO_RESEARCH_FOUNDATIONS.md`
+See `docs/SLEEP_GUIDE.md` and `docs/research/SLEEP_AUDIO_RESEARCH_FOUNDATIONS.md`.
 
 ## Advanced Studio
 
 ```bash
 sbgpy-gui
 ```
-
-The installed entry point uses a guarded wrapper that:
-
-- allows one export and one preview at a time;
-- captures Tk values before worker threads start;
-- keeps Tk updates on the UI thread;
-- closes replaced Matplotlib figures.
 
 Quick CLI examples:
 
@@ -106,73 +192,40 @@ sbgpy --isochronic 220 8 --noise 12 --noise-kind pink --duration 300 --outfile f
 sbgpy --harmonic-box 180 5 8 --music "soundscapes/rain.flac" --loop-music --duration 600 --outfile rain-session.wav
 ```
 
-## SBG schedules
-
-```bash
-sbgpy schedules/example.sbg --outfile scheduled.wav
-```
-
-Example:
-
-```text
-alpha: 200+10/50 pink/8
-pulse: iso:220,8/35
-bed: "audio/soft rain.flac/40"
-
-NOW alpha +bed
-5:00 pulse +bed ->
-10:00 alpha +bed
-15:00 off
-```
-
-Schedule behavior:
-
-- an unprefixed event replaces active tone sets;
-- `+name` adds and `-name` removes;
-- `off`, `-`, and `alloff` clear audio as appropriate;
-- silence remains on the timeline;
-- still-active generators retain phase and file position across events;
-- trailing `->` crossfades over the full interval to the next timed event;
-- unknown names and malformed transitions are errors.
-
-Output is written to a same-directory temporary file and atomically replaces the destination only after success. A failed or empty render preserves an existing file.
+The advanced desktop wrapper permits one export and preview at a time, captures Tk values before worker threads start, keeps Tk updates on the UI thread, and closes replaced Matplotlib figures.
 
 ## Python API
 
 ```python
-from pysbagen import SleepRequest, render_sleep, write_audio
-from pysbagen.sleep import build_sleep_recipe, write_recipe_manifest
+from pysbagen import inspect_artifact, render_schedule, write_audio
 
-request = SleepRequest(
-    problem="racing_mind",
-    sound_world="slow_night_music",
-    intensity="balanced",
-    duration_minutes=45,
-)
-recipe = build_sleep_recipe(request)
-result = write_audio(render_sleep(request), "sleep-journey.wav")
-write_recipe_manifest(recipe, result.outfile)
+artifact = inspect_artifact("session.sbg")
+print(artifact.report.to_text())
+
+# Rendering re-imports and enforces the same canonical policy.
+result = write_audio(render_schedule("session.sbg"), "session.wav")
+print(result.manifest)
 ```
 
 ## Ordinary use and research use are separate
 
-The Sleep Guide does not secretly assign sham or blinded conditions. A future separately launched **Research Dose Environment** is reserved for informed consent, eligibility, protocol assignment, exact recipes, pre/post measures, adverse-effect reporting, and data export.
+The Sleep Guide does not secretly assign sham or blinded conditions. A future separately launched Research Dose Environment remains reserved for informed consent, eligibility, exact protocols, pre/post measures, adverse-effect reporting, and data export.
 
 ## Qualification
 
 ```bash
 pytest
-python -m compileall -q pysbagen gui.py gui_safe.py sleep_gui.py visualization.py drg_decoder.py
+python -m compileall -q pysbagen gui.py gui_safe.py inspect_gui.py sleep_gui.py visualization.py drg_decoder.py
 python -m pip wheel . --no-deps
 ```
 
-GitHub Actions qualifies Python 3.10 through 3.13.
+GitHub Actions qualifies Python 3.10 through 3.13 when Actions budget is available. Local qualification remains a release gate.
 
 ## Safety
 
 Use a comfortable volume and stop on discomfort, headache, dizziness, agitation, or worsened symptoms. Do not use sleep audio while driving or doing alertness-critical work.
 
-PySbagen does not promise diagnosis, treatment, dopamine delivery, guaranteed sleep, pain or migraine relief, sobriety, or behavioral outcomes. Severe or unusual symptoms, dangerous withdrawal, overdose, self-harm risk, and urgent crises require real-world professional, emergency, or crisis support.
+PySbagen does not promise diagnosis, treatment, dopamine delivery, guaranteed sleep, pain or migraine relief, sobriety, creativity, or behavioral outcomes. Severe or unusual symptoms, dangerous withdrawal, overdose, self-harm risk, and urgent crises require real-world professional, emergency, or crisis support.
 
 ## License
 

@@ -61,6 +61,22 @@ def test_probe_executable_uses_help_banner(monkeypatch):
     assert warning is None
 
 
+def test_probe_executable_rejects_unrecognized_help_banner(monkeypatch):
+    monkeypatch.setattr(
+        "pysbagen.sbagenx_backend.subprocess.run",
+        lambda *args, **kwargs: SimpleNamespace(
+            returncode=0,
+            stdout="Some unrelated executable\nusage follows\n",
+            stderr="",
+        ),
+    )
+
+    version, warning = _probe_executable("not-sbagenx")
+
+    assert version is None
+    assert warning == "Could not parse SBaGenX version from help banner: Some unrelated executable"
+
+
 def test_probe_can_record_explicit_paths_without_loading(tmp_path: Path):
     executable = tmp_path / "sbagenx"
     executable.write_text("not executed", encoding="utf-8")
@@ -81,6 +97,38 @@ def test_probe_can_record_explicit_paths_without_loading(tmp_path: Path):
     assert report.library_path == str(library.resolve())
     assert report.executable_version is None
     assert report.api_version is None
+
+
+def test_non_executable_candidate_is_not_usable(monkeypatch, tmp_path: Path):
+    executable = tmp_path / "sbagenx"
+    executable.write_text("not executable", encoding="utf-8")
+    monkeypatch.setattr(
+        "pysbagen.sbagenx_backend.subprocess.run",
+        lambda *args, **kwargs: (_ for _ in ()).throw(PermissionError("permission denied")),
+    )
+    monkeypatch.setattr("pysbagen.sbagenx_backend.ctypes.util.find_library", lambda _: None)
+
+    report = probe_sbagenx(executable=executable)
+
+    assert report.candidate_found
+    assert not report.usable
+    assert any("permission denied" in warning for warning in report.warnings)
+
+
+def test_unloadable_library_candidate_is_not_usable(monkeypatch, tmp_path: Path):
+    library = tmp_path / "libsbagenx.so"
+    library.write_text("not a shared library", encoding="utf-8")
+    monkeypatch.setattr(
+        "pysbagen.sbagenx_backend._probe_library",
+        lambda path: (None, None, [], "Could not load SBaGenX library: invalid image"),
+    )
+    monkeypatch.setattr("pysbagen.sbagenx_backend.shutil.which", lambda _: None)
+
+    report = probe_sbagenx(library=library, query_executable=False)
+
+    assert report.candidate_found
+    assert not report.usable
+    assert any("invalid image" in warning for warning in report.warnings)
 
 
 def test_probe_missing_configured_backend_names_the_path(monkeypatch, tmp_path: Path):

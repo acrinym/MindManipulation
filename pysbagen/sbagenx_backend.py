@@ -3,6 +3,7 @@ from __future__ import annotations
 import ctypes
 import ctypes.util
 import os
+import re
 import shutil
 import subprocess
 from dataclasses import asdict, dataclass, field
@@ -90,7 +91,7 @@ def _find_executable(explicit: str | os.PathLike[str] | None) -> str | None:
         if path.is_file():
             return str(path.resolve())
         resolved = shutil.which(candidate)
-        return str(Path(resolved).resolve()) if resolved else candidate
+        return str(Path(resolved).resolve()) if resolved else None
     resolved = shutil.which("sbagenx")
     return str(Path(resolved).resolve()) if resolved else None
 
@@ -107,9 +108,15 @@ def _find_library(explicit: str | os.PathLike[str] | None) -> str | None:
 
 
 def _probe_executable(path: str, timeout: float = 3.0) -> tuple[str | None, str | None]:
+    """Read the version from SBaGenX's stable `-h` banner.
+
+    SBaGenX uses `-V` for master volume and does not publish a `--version`
+    interface in the reviewed source. The first help line contains the version.
+    """
+
     try:
         completed = subprocess.run(
-            [path, "--version"],
+            [path, "-h"],
             check=False,
             capture_output=True,
             text=True,
@@ -117,10 +124,14 @@ def _probe_executable(path: str, timeout: float = 3.0) -> tuple[str | None, str 
         )
     except (OSError, subprocess.SubprocessError) as exc:
         return None, f"Could not query SBaGenX executable: {exc}"
-    output = (completed.stdout or completed.stderr).strip()
+    output = "\n".join(part for part in (completed.stdout, completed.stderr) if part).strip()
     if completed.returncode != 0:
-        return None, f"SBaGenX --version exited with status {completed.returncode}: {output or 'no output'}"
-    return output.splitlines()[0] if output else None, None
+        return None, f"SBaGenX -h exited with status {completed.returncode}: {output or 'no output'}"
+    if not output:
+        return None, "SBaGenX -h returned no identity banner"
+    first_line = output.splitlines()[0].strip()
+    match = re.search(r"\bversion\s+([^\s]+)", first_line, flags=re.IGNORECASE)
+    return (match.group(1) if match else first_line), None
 
 
 def _read_c_string(function: Any) -> str | None:

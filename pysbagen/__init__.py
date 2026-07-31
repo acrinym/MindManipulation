@@ -10,14 +10,17 @@ from .api import (
 )
 from .compatibility import CompatibilityState, ImportReport, RenderDisposition
 from .importers import ImportedArtifact, import_artifact, import_drg, import_sbg
+from .sbagenx_backend import BackendCapability, SBaGenXProbe, probe_sbagenx
 from .sleep import SleepLayers, SleepRecipe, SleepRequest, build_sleep_recipe
 
 __all__ = [
+    "BackendCapability",
     "CompatibilityState",
     "ImportReport",
     "ImportedArtifact",
     "RenderDisposition",
     "RenderResult",
+    "SBaGenXProbe",
     "SleepLayers",
     "SleepRecipe",
     "SleepRequest",
@@ -26,6 +29,7 @@ __all__ = [
     "import_drg",
     "import_sbg",
     "inspect_artifact",
+    "probe_sbagenx",
     "render_schedule",
     "render_sleep",
     "render_specs",

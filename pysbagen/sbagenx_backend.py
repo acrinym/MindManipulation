@@ -166,7 +166,9 @@ def _probe_executable(path: str, timeout: float = 3.0) -> tuple[str | None, str 
         return None, "SBaGenX -h returned no identity banner"
     first_line = output.splitlines()[0].strip()
     match = re.search(r"\bversion\s+([^\s]+)", first_line, flags=re.IGNORECASE)
-    return (match.group(1) if match else first_line), None
+    if not match:
+        return None, f"Could not parse SBaGenX version from help banner: {first_line}"
+    return match.group(1), None
 
 
 def _read_c_string(function: Any) -> str | None:

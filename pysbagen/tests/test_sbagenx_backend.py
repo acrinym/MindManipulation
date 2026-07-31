@@ -74,11 +74,24 @@ def test_probe_can_record_explicit_paths_without_loading(tmp_path: Path):
         load_library=False,
     )
 
-    assert report.available
+    assert report.candidate_found
+    assert not report.usable
+    assert not report.available
     assert report.executable_path == str(executable.resolve())
-    assert report.library_path == str(library)
+    assert report.library_path == str(library.resolve())
     assert report.executable_version is None
     assert report.api_version is None
+
+
+def test_probe_missing_configured_backend_names_the_path(monkeypatch, tmp_path: Path):
+    missing = tmp_path / "missing-sbagenx"
+    monkeypatch.setattr("pysbagen.sbagenx_backend.shutil.which", lambda _: None)
+    monkeypatch.setattr("pysbagen.sbagenx_backend.ctypes.util.find_library", lambda _: None)
+
+    report = probe_sbagenx(executable=missing, query_executable=False, load_library=False)
+
+    assert not report.candidate_found
+    assert any(str(missing) in warning for warning in report.warnings)
 
 
 def test_probe_missing_backend_is_explicit(monkeypatch):
@@ -90,5 +103,6 @@ def test_probe_missing_backend_is_explicit(monkeypatch):
     report = probe_sbagenx()
 
     assert not report.available
+    assert not report.candidate_found
     assert report.warnings
     assert "existing Python backend remains available" in report.warnings[-1]

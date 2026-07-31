@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ctypes
+import hashlib
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -58,6 +59,8 @@ class NativeValidationReport:
     source_path: str
     source_kind: str
     source_encoding: str
+    source_size: int
+    source_sha256: str
     library_path: str
     library_version: str
     api_version: int
@@ -84,6 +87,8 @@ class NativeValidationReport:
             f"SBaGenX native validation: {self.source_path}",
             f"Kind: {self.source_kind}",
             f"Encoding: {self.source_encoding}",
+            f"Source bytes: {self.source_size}",
+            f"Source SHA-256: {self.source_sha256}",
             f"Library: {self.library_path}",
             f"Version/API: {self.library_version} / {self.api_version}",
             f"Valid: {'yes' if self.valid else 'no'}",
@@ -131,6 +136,8 @@ class SBaGenXNative:
         self._free_diagnostics.restype = None
 
         version_value = self._version()
+        if not version_value:
+            raise SBaGenXNativeError("SBaGenX library returned an empty sbx_version value")
         self.version = _decode_c_value(version_value)
         self.api_version = int(self._api_version())
         if not api_min <= self.api_version <= api_max:
@@ -177,6 +184,10 @@ class SBaGenXNative:
         )
         items: list[NativeDiagnostic] = []
         try:
+            if count.value and not diagnostics:
+                raise SBaGenXNativeError(
+                    f"SBaGenX returned {count.value} diagnostics with a null diagnostic pointer"
+                )
             for index in range(count.value):
                 raw = diagnostics[index]
                 items.append(
@@ -210,16 +221,16 @@ def _decode_c_value(value: Any) -> str:
     return raw.split(b"\0", 1)[0].decode("utf-8", errors="replace")
 
 
-def _read_source(path: Path) -> tuple[str, str]:
-    """Read a preserved source using UTF-8 BOM, UTF-8, then Latin-1 fallback."""
+def _read_source(path: Path) -> tuple[str, str, bytes]:
+    """Read source bytes and decode with UTF-8 BOM, UTF-8, then Latin-1 fallback."""
 
     data = path.read_bytes()
     if data.startswith(b"\xef\xbb\xbf"):
-        return data.decode("utf-8-sig"), "utf-8-sig"
+        return data.decode("utf-8-sig"), "utf-8-sig", data
     try:
-        return data.decode("utf-8"), "utf-8"
+        return data.decode("utf-8"), "utf-8", data
     except UnicodeDecodeError:
-        return data.decode("latin-1"), "latin-1"
+        return data.decode("latin-1"), "latin-1", data
 
 
 def validate_sbagenx_source(
@@ -239,13 +250,15 @@ def validate_sbagenx_source(
         raise SBaGenXNativeError(
             "SBaGenX native library was not found; set SBAGENXLIB_PATH or pass --library"
         )
-    text, encoding = _read_source(path)
+    text, encoding, source_bytes = _read_source(path)
     native = SBaGenXNative(library_path, loader=loader)
     status, diagnostics = native.validate_text(text, str(path), source_kind)
     return NativeValidationReport(
         source_path=str(path),
         source_kind=source_kind,
         source_encoding=encoding,
+        source_size=len(source_bytes),
+        source_sha256=hashlib.sha256(source_bytes).hexdigest(),
         library_path=library_path,
         library_version=native.version,
         api_version=native.api_version,

@@ -7,6 +7,17 @@
 **Status:** Complete and merged to `main`  
 **Source plan:** `.beads/pysbagen_compatibility_preservation_train_2026_07_31.md`
 
+## Scope clarification
+
+This receipt closes the **13-bead compatibility, preservation, inspection, qualification, and provenance train only**.
+
+It does not claim that the separate workstation/product features listed by the original SBaGen website and bundled `TODO.txt` were implemented. Those missing and partial capabilities are now reconciled in:
+
+- `docs/planning/SBAGEN_ORIGINAL_TODO_GAP_MATRIX.md`
+- `.beads/pysbagen_experimenter_workstation_train_2026_07_31.md`
+
+The compatibility train remains valid and complete inside its declared scope. The wider pain-point handoff remains open until the workstation matrix is delivered or explicitly dispositioned.
+
 ## Train result
 
 The 13-bead compatibility train was implemented and merged as one coherent product path. SBG and DRG artifacts now enter through a canonical import contract before rendering, playback, extraction, or library storage.

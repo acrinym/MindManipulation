@@ -1,3 +1,5 @@
+"""Optional, version-aware discovery for locally installed SBaGenX runtimes."""
+
 from __future__ import annotations
 
 import ctypes
@@ -34,23 +36,31 @@ class SBaGenXProbe:
 
     @property
     def candidate_found(self) -> bool:
+        """Return whether discovery found an executable or library candidate."""
+
         return bool(self.executable_path or self.library_path)
 
     @property
     def native_api_available(self) -> bool:
+        """Return whether a native library exposed a readable API revision."""
+
         return self.api_version is not None
 
     @property
     def usable(self) -> bool:
+        """Return whether at least one candidate passed identity qualification."""
+
         return bool(self.executable_version or self.native_api_available)
 
     @property
     def available(self) -> bool:
-        """Backward-friendly alias for a backend that passed identity probing."""
+        """Return a backward-friendly alias for a qualified usable backend."""
 
         return self.usable
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the probe result for deterministic JSON output."""
+
         payload = asdict(self)
         payload["candidate_found"] = self.candidate_found
         payload["native_api_available"] = self.native_api_available
@@ -59,6 +69,8 @@ class SBaGenXProbe:
         return payload
 
     def to_text(self) -> str:
+        """Render a compact human-readable qualification report."""
+
         lines = ["SBaGenX backend probe"]
         lines.append(f"Candidate found: {'yes' if self.candidate_found else 'no'}")
         lines.append(f"Usable backend: {'yes' if self.usable else 'no'}")
@@ -92,6 +104,8 @@ _CAPABILITY_SYMBOLS: tuple[tuple[str, tuple[str, ...]], ...] = (
 
 
 def _normalize_candidate(value: str | os.PathLike[str] | None) -> str | None:
+    """Normalize an optional path/name while preserving loader-friendly names."""
+
     if value is None:
         return None
     text = os.fspath(value).strip()
@@ -99,6 +113,8 @@ def _normalize_candidate(value: str | os.PathLike[str] | None) -> str | None:
 
 
 def _find_executable(explicit: str | os.PathLike[str] | None) -> str | None:
+    """Resolve an explicit/environment/PATH SBaGenX executable candidate."""
+
     candidate = _normalize_candidate(explicit) or _normalize_candidate(os.getenv("SBAGENX_BIN"))
     if candidate:
         path = Path(candidate)
@@ -111,6 +127,8 @@ def _find_executable(explicit: str | os.PathLike[str] | None) -> str | None:
 
 
 def _find_library(explicit: str | os.PathLike[str] | None) -> str | None:
+    """Resolve an explicit/environment/system SBaGenX shared-library candidate."""
+
     candidate = _normalize_candidate(explicit) or _normalize_candidate(os.getenv("SBAGENXLIB_PATH"))
     if candidate:
         path = Path(candidate)
@@ -125,9 +143,9 @@ def _find_library(explicit: str | os.PathLike[str] | None) -> str | None:
 
 
 def _probe_executable(path: str, timeout: float = 3.0) -> tuple[str | None, str | None]:
-    """Read the version from SBaGenX's stable `-h` banner.
+    """Read the version from SBaGenX's stable ``-h`` banner.
 
-    SBaGenX uses `-V` for master volume and does not publish a `--version`
+    SBaGenX uses ``-V`` for master volume and does not publish a ``--version``
     interface in the reviewed source. The first help line contains the version.
     """
 
@@ -152,6 +170,8 @@ def _probe_executable(path: str, timeout: float = 3.0) -> tuple[str | None, str 
 
 
 def _read_c_string(function: Any) -> str | None:
+    """Call a no-argument C function returning a UTF-8-compatible string."""
+
     function.restype = ctypes.c_char_p
     value = function()
     if not value:
@@ -165,6 +185,8 @@ def _probe_library(
     path: str,
     loader: Callable[[str], Any] = ctypes.CDLL,
 ) -> tuple[str | None, int | None, list[BackendCapability], str | None]:
+    """Load a candidate library and report identity plus required symbols."""
+
     try:
         library = loader(path)
     except (OSError, TypeError) as exc:

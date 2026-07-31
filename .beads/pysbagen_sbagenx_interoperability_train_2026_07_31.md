@@ -1,7 +1,7 @@
 # PySbagen × SBaGenX Differentiation and Interoperability Beadtrain
 
 **Date:** July 31, 2026  
-**Status:** Active — first native interoperability foundation implemented  
+**Status:** Active — first native interoperability foundation implemented and qualified  
 **Branch:** `agent/sbagenx-interoperability-train-20260731`  
 **Pull request:** `#11` — Differentiate PySbagen and begin SBaGenX interoperability  
 **Source matrix:** `docs/planning/SBAGENX_DIFFERENTIATION_AND_INTEROP_MATRIX.md`  
@@ -159,20 +159,34 @@ Required journeys:
 
 ## Current qualification receipt
 
-Focused tests authored for:
+GitHub Actions **Python qualification run #42** passed on the implementation head:
 
-- executable help-banner identity;
+- Python 3.10 product-path tests — passed;
+- Python 3.11 product-path tests — passed;
+- Python 3.12 product-path tests — passed;
+- Python 3.13 product-path tests — passed;
+- complete repository result — **55 tests passed**;
+- Python 3.12 source distribution and wheel build — passed;
+- wheel inspection in the build log includes `pysbagen/sbagenx_backend.py` and `pysbagen/sbagenx_native.py`.
+
+The build emits an existing setuptools deprecation warning for the TOML-table form of `project.license`; it does not fail this train but should be repaired before the announced February 18, 2027 cutoff.
+
+CodeRabbit status is green. Two correctness threads were addressed and resolved:
+
+1. candidate discovery was separated from successful backend qualification, with normal CLI failure for unusable candidates;
+2. unrecognized help banners no longer become fake version strings.
+
+Regression coverage includes:
+
+- executable help-banner identity and unrecognized-banner refusal;
 - native library version/API/symbol discovery;
 - discovered-versus-qualified state;
+- non-executable and unloadable candidates;
 - missing backend/configured path reporting;
 - exact API-47 diagnostic decoding;
 - rejection of unknown API revisions;
 - rejection of malformed null diagnostic pointers;
 - Latin-1 source preservation and SHA-256 identity.
-
-A previous isolated run passed the initial probe and native-binding tests. After the latest hardening commits, this runtime could not clone the public branch because outbound DNS access was unavailable, and no GitHub Actions run appeared for the current PR head. The full repository suite therefore remains an explicit pre-merge requirement rather than an implied success.
-
-CodeRabbit's full review was rate-limited. Its available static precheck reported low helper-docstring coverage; the new backend module was then fully documented. No actionable inline review thread has been posted.
 
 ## Definition of done
 

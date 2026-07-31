@@ -2,12 +2,14 @@
 
 **Date:** July 31, 2026  
 **Branch:** `agent/compatibility-preservation-train-20260731`  
-**Status:** Implementation complete; PR qualification pending  
+**Pull request:** `#9` — Build the SBaGen and DRG compatibility product  
+**Merge commit:** `0c95a67ca65db22d6441b123a5709bcaf929a064`  
+**Status:** Complete and merged to `main`  
 **Source plan:** `.beads/pysbagen_compatibility_preservation_train_2026_07_31.md`
 
 ## Train result
 
-The 13-bead compatibility train was implemented as one coherent product path. SBG and DRG artifacts now enter through a canonical import contract before rendering, playback, extraction, or library storage.
+The 13-bead compatibility train was implemented and merged as one coherent product path. SBG and DRG artifacts now enter through a canonical import contract before rendering, playback, extraction, or library storage.
 
 ## Completed beads
 
@@ -21,7 +23,7 @@ Added non-destructive SBG inspection through API, terminal, and desktop paths. R
 
 ### CP-003 — Complete DRG preservation
 
-Replaced schedule/image-only handling with a structured package model that retains original bytes, every decoded element in order, opaque elements, encrypted/decrypted identities, metadata, image bytes, nested SBG source, warnings, and a deterministic preservation manifest.
+Replaced schedule/image-only handling with a structured package model that retains original bytes, every decoded element in order, opaque elements, encoded/decoded/decrypted identities, metadata, image bytes, nested SBG source, warnings, and a deterministic preservation manifest.
 
 ### CP-004 — Honest DRG import report
 
@@ -44,7 +46,7 @@ Added one render policy shared by API, CLI, and GUI:
 - unsupported/unknown/missing-source/intentionally-excluded remain inspection-only;
 - unsafe or malformed imports are blocked.
 
-Schedule renders receive a `.pysbagen.json` sidecar with the exact import report, output identity, and disclosed changes.
+Schedule renders receive a `.pysbagen.json` sidecar with the exact import report, output identity, path qualification, and disclosed changes.
 
 ### CP-008 — Timeline/source inspector model
 
@@ -56,7 +58,7 @@ Added `sbgpy-inspect` and `sbgpy-inspect-gui`. The desktop inspector shows the r
 
 ### CP-010 — Imported-source qualification
 
-Added bounded-memory source analysis for container, codec, channels, sample rate, duration, peak, clipping, stereo correlation, near-mono state, resampling, and suitability. ffprobe provides metadata fallback where available.
+Added bounded-memory source analysis for container, codec, channels, sample rate, duration, peak, clipping, stereo correlation, near-mono state, anti-phase state, resampling, and suitability. ffprobe provides metadata fallback where available.
 
 ### CP-011 — Listening/rendering-path qualification
 
@@ -79,17 +81,29 @@ Added synthetic and repository-authored tests for supported SBG inspection, open
 - `sbgpy-inspect-gui`
 - existing `sbgpy` rendering now enforces compatibility policy for SBG and DRG imports
 
-## Legal and product boundary
+## Qualification and review receipt
 
-No proprietary I-Doser content was added. DRG tests construct synthetic packages. Compatibility operates on lawfully possessed or legally distributable user files. Creativity implementation remains deferred.
-
-## Pre-PR local qualification
-
-A reconstructed local product path completed:
+Pre-PR reconstructed validation:
 
 - compatibility journey tests — **10 passed**;
 - package compile check — **passed**;
 - desktop inspector compile check — **passed**;
 - machine matrix/document drift check — **passed**.
 
-The GitHub PR remains responsible for full repository qualification before merge. This receipt must be updated with the final PR and merge result after that gate completes.
+PR qualification:
+
+- Python 3.10 product-path tests — **passed**;
+- Python 3.11 product-path tests — **passed**;
+- Python 3.12 product-path tests and distributable wheel build — **passed**;
+- Python 3.13 product-path tests — **passed**;
+- full repository result — **43 tests passed**;
+- mergeability — **clean**;
+- actionable review threads at merge — **none**.
+
+CI caught one real compatibility-policy regression before merge: a usable near-mono ambient bed was incorrectly acknowledgement-gated. The source-quality disclosure was separated from protocol-semantic changes, the existing schedule-relative audio journey was restored, and the complete matrix passed again.
+
+A final self-review also separated anti-phase stereo from near-mono stereo so channel diagnostics no longer conflate opposite-channel material with effectively mono material.
+
+## Legal and product boundary
+
+No proprietary I-Doser content was added. DRG tests construct synthetic packages. Compatibility operates on lawfully possessed or legally distributable user files. Creativity implementation remains deferred.

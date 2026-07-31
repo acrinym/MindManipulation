@@ -8,10 +8,11 @@ from .compatibility import RenderDisposition
 from .importers import import_artifact
 from .inspector import build_timeline, inspect_audio_source, qualify_audio_path, timeline_to_dict, timeline_to_text
 from .library import LocalLibrary
+from .sbagenx_backend import probe_sbagenx
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="sbgpy-inspect", description="Inspect SBG/DRG compatibility, audio sources, output routes, and the local library.")
+    parser = argparse.ArgumentParser(prog="sbgpy-inspect", description="Inspect SBG/DRG compatibility, audio sources, output routes, optional SBaGenX backends, and the local library.")
     subparsers = parser.add_subparsers(dest="command", required=True)
     inspect_parser = subparsers.add_parser("inspect", help="Inspect an SBG or DRG artifact")
     inspect_parser.add_argument("source")
@@ -35,6 +36,11 @@ def build_parser() -> argparse.ArgumentParser:
     path_parser.add_argument("--bluetooth", action="store_true")
     path_parser.add_argument("--json", action="store_true", dest="as_json")
     path_parser.add_argument("--save")
+    backend_parser = subparsers.add_parser("backend", help="Discover and qualify an optional SBaGenX executable/native library")
+    backend_parser.add_argument("--executable", help="Explicit SBaGenX executable path; otherwise use SBAGENX_BIN/PATH")
+    backend_parser.add_argument("--library", help="Explicit sbagenxlib path; otherwise use SBAGENXLIB_PATH/system lookup")
+    backend_parser.add_argument("--discover-only", action="store_true", help="Locate candidates without executing or loading them")
+    backend_parser.add_argument("--json", action="store_true", dest="as_json")
     library_parser = subparsers.add_parser("library", help="Inspect or verify the local-first library")
     library_parser.add_argument("action", choices=["list", "show", "verify", "archive", "export"])
     library_parser.add_argument("item_id", nargs="?")
@@ -60,6 +66,15 @@ def main(argv: list[str] | None = None) -> int:
             Path(args.save).write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
             print(f"Saved path qualification: {Path(args.save).resolve()}")
         return 0 if report.safe_to_start else 2
+    if args.command == "backend":
+        report = probe_sbagenx(
+            executable=args.executable,
+            library=args.library,
+            query_executable=not args.discover_only,
+            load_library=not args.discover_only,
+        )
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True) if args.as_json else report.to_text())
+        return 0 if report.available else 2
     if args.command == "library":
         return _library_command(args)
     raise AssertionError(f"Unhandled command: {args.command}")

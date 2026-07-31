@@ -1,7 +1,7 @@
 # PySbagen Current Product Priority
 
 **Date:** July 31, 2026  
-**Status:** Compatibility delivered; SBaGenX interoperability and PySbagen differentiation are the active priority
+**Status:** Compatibility and native validation foundations delivered; Living Sessions is the active differentiated product train
 
 ## Delivered compatibility foundation
 
@@ -16,113 +16,139 @@ Delivered capabilities remain:
 5. audio-source and listening-path qualification;
 6. local-first provenance library.
 
-## Product-direction correction
+## Product boundary
 
-A source-level review of `lm7137/SBaGenX` showed that the broad Python workstation plan would duplicate the active modern SBaGen lineage. SBaGenX already provides substantial native engine, `.sbg`/`.sbgf`, curve, mix-effect, live-control, multivoice, export, plotting, packaging, desktop, and Android work.
+A source-level review of `lm7137/SBaGenX` showed that rebuilding the modern SBaGen workstation in Python would duplicate active native work.
 
 Therefore:
 
-> PySbagen will not rebuild SBaGenX in Python.
+> SBaGenX performs advanced native SBaGen DSP and authoring. PySbagen preserves, explains, guides, remembers, and learns locally.
 
-The broad workstation recreation train is retained only as a superseded record:
+The broad workstation recreation train remains only as a superseded record:
 
 - `.beads/pysbagen_experimenter_workstation_train_2026_07_31.md`
 
-## Active priority
-
-Authoritative boundary:
+The authoritative boundary remains:
 
 - `docs/planning/SBAGENX_DIFFERENTIATION_AND_INTEROP_MATRIX.md`
 
-Active implementation train:
+## Stacked active work
 
-- `.beads/pysbagen_sbagenx_interoperability_train_2026_07_31.md`
+### Interoperability foundation
 
-Active branch and PR:
+Branch and PR:
 
 - `agent/sbagenx-interoperability-train-20260731`
 - PR `#11` — **Differentiate PySbagen and begin SBaGenX interoperability**
 
-## Product responsibilities
+Delivered there:
 
-### SBaGenX
+- optional SBaGenX executable/library discovery;
+- truthful candidate-versus-qualified status;
+- exact API-47 ctypes validation contract;
+- combined PySbagen/SBaGenX source-hash-bound discrepancy reports;
+- first-class SBGF preservation and local-library storage;
+- Python 3.10–3.13 qualification with 59 tests and a successful package build.
 
-Treat SBaGenX as the optional advanced native SBaGen engine for:
+Native rendering remains intentionally disabled until SBX-006 delivers typed render/context/writer bindings, parity fixtures, explicit selection policy, and complete receipts in the same change.
 
-- advanced SBG sequencing and DSP;
-- `.sbgf` curves and built-in programs;
-- native validation and future optional rendering;
-- mixspin/mixbeat/mixpulse/mixam;
-- native live parameter controls;
-- multiple voices, auxiliary tones, plotting, export, and frontend work.
+### Active product train — Living Sessions
 
-### PySbagen
+Branch:
 
-Keep PySbagen focused on:
+- `agent/living-sessions-train-20260731`
 
-- SBG/SBGF/DRG inspection and preservation;
-- explicit compatibility-loss reports;
-- immutable protocol/package/session/output provenance;
-- local-first protocol library;
-- audio-source and listening-path qualification;
-- guided human-question products;
-- backend-independent session markers and event ledger;
-- outcome history and local preference learning;
-- evidence-position and claim provenance;
-- consent-aware research workflows;
-- one-shot cue/session orchestration only after checking upstream.
+Train:
 
-SBaGenX remains optional. The Python renderer remains the portable fallback and current guided-product engine.
+- `.beads/pysbagen_living_sessions_train_2026_07_31.md`
 
-## Implementation delivered on the active branch
+Research synthesis:
 
-### Backend discovery and qualification
+- `docs/research/HTE_LIVING_SESSIONS_GAP_SYNTHESIS_2026_07_31.md`
 
-- `pysbagen/sbagenx_backend.py`
-- `sbgpy-inspect backend`
-- executable/library discovery, candidate-versus-usable status, version/API identity, and symbol-backed capabilities
+The train uses the project-owner supplied `HTE-Newest.zip` as a reasoning source, especially its InvisiSynth, Learning, Affect, Parallel Oracle, Synthesis, Intersection, and Lateral concepts. No HTE runtime code is vendored.
 
-### Typed native validation
+## Why Living Sessions is first
 
-- `pysbagen/sbagenx_native.py`
-- exact API-47 ctypes signatures and diagnostic layout
-- fail-closed unknown-API, missing-symbol, malformed-pointer, and false-banner behavior
-- immutable source byte count and SHA-256
-- SBG/SBGF diagnostics with severity, code, location, range, and message
-- native library/version/API identity in deterministic reports
+A more capable renderer does not by itself create a product someone returns to.
 
-### Combined compatibility truth
+PySbagen's differentiation is the continuing experience above either backend:
 
-- `pysbagen/interoperability.py`
-- `sbgpy-inspect backend --validate SOURCE`
-- PySbagen compatibility disposition and SBaGenX validity remain separate
-- exact-source identity comparison
-- explicit discrepancies for cross-engine acceptance/rejection and semantic differences
-- native success cannot erase PySbagen blockers, missing sources, unsupported states, or approximations
+- memorable identities bound to exact recipe hashes;
+- exact returns instead of disposable regenerated files;
+- one-variable branches for understandable learning;
+- high-salience contrast after poor outcomes;
+- bounded two-change wander experiments;
+- local echoes and remembered moments;
+- optional affect-tagged outcomes;
+- transparent next-mode recommendations;
+- a personal lineage atlas that becomes more useful with honest history.
 
-### First-class SBGF preservation
+This is not a badge or streak layer. Continued use creates value because the archive gains memory, the user gains reproducible choices, and future sessions can build on known lineages.
 
-- `pysbagen/sbgf.py`
-- ordinary `sbgpy-inspect inspect SOURCE.sbgf`
-- immutable bytes/hash/encoding
-- parameters, solve directives, assignments, function inventory, media dependencies, and unknown-line preservation
-- local content-addressed library storage and offline verification
-- explicit `inspection-only` state and native-runtime requirement
-- no invented replacement curve language or fake SBG timeline
+## Current Living Sessions implementation
 
-## Next implementation bead
+### Identity and provenance
 
-**SBX-006 — Optional native render backend with receipts** is next.
+- deterministic two-word title;
+- deterministic three-word motif;
+- exact recipe SHA-256;
+- stable lineage ID;
+- unique session occurrence ID;
+- parent and generation records.
 
-Native rendering remains deliberately disabled until the same change delivers:
+### Variation modes
 
-- exact typed context/render/writer bindings and cleanup;
-- representative parity/discrepancy fixtures;
-- explicit `python`, `sbagenx`, and capability-gated `auto` policy;
-- source/backend/API/configuration/output-hash receipts;
-- preserved Python fallback and guided-product behavior.
+- `return` — exact recipe, title, and motif;
+- `branch` — exactly one disclosed product-level change;
+- `contrast` — one high-salience disclosed change;
+- `wander` — at most two compatible disclosed changes, marked less causally interpretable.
 
-The current implementation passed Python 3.10–3.13 qualification with **59 tests** and a successful source distribution/wheel build.
+The user's stated sleep problem is never silently changed.
+
+### Local memory
+
+- immutable plan JSON;
+- append-only event/echo JSONL;
+- immutable optional outcome JSON;
+- before/after valence, arousal, and agency context;
+- rating, comfort, would-repeat, notes, and tags;
+- lineage and echo queries.
+
+### Personal atlas
+
+- session and lineage counts;
+- completion and echo counts;
+- optional average rating and would-repeat rate;
+- optional average affect delta;
+- lineage title history;
+- descriptive local pattern candidates after repeated observations.
+
+Patterns remain descriptive personal records, not medical-efficacy claims.
+
+### Product command
+
+- `sbgpy-session new-sleep`
+- `sbgpy-session render`
+- `sbgpy-session mark`
+- `sbgpy-session finish`
+- `sbgpy-session next`
+- `sbgpy-session show`
+- `sbgpy-session list`
+- `sbgpy-session atlas`
+
+The current render path reconstructs the exact stored SleepRequest and records the actual Python backend, recipe identity, and output hash. Future SBaGenX rendering will plug into the same experience layer through an explicit qualified backend policy.
+
+## Next original product work
+
+After the first Living Sessions foundation qualifies:
+
+1. constellation visualization of lineages, mutations, echoes, and outcomes;
+2. two-parent Confluence sessions with complete inherited-dimension receipts;
+3. Echo Weaving into backend-independent cue/orchestration anchors;
+4. shareable seed capsules without personal history by default;
+5. Living Sessions for imported SBG, native-required SBGF, and research protocols;
+6. resume SBX-006 native rendering beneath the same session identity and receipt layer.
 
 ## Creativity status
 
@@ -131,17 +157,18 @@ The creativity research remains preserved in:
 - `docs/research/CREATIVITY_AUDIO_RESEARCH_FOUNDATIONS.md`
 - `docs/planning/CREATIVITY_PRODUCT_GAP_CHECK.md`
 
-**Creativity implementation remains deferred.** Interoperability and the differentiated session-intelligence foundation take precedence.
+Creativity implementation remains deferred. Living Sessions and SBaGenX interoperability establish the durable product foundation creativity will later use.
 
 ## Completion rule
 
 This priority is complete only when:
 
-- native integration is version- and symbol-gated;
-- native validation and rendering cannot bypass compatibility truth or provenance;
+- native integration cannot bypass compatibility truth or provenance;
 - SBGF and DRG remain first-class preserved artifacts;
 - backend choice is visible and reproducible;
 - Python fallback remains supported;
-- PySbagen-owned session/event/outcome features work above either backend;
+- session identity and memory work above either backend;
+- repeated use creates transparent new value without manipulative engagement;
+- local outcome history remains optional, inspectable, and non-medical;
 - full tests and package builds pass before merge;
-- verify-later rows are resolved rather than guessed.
+- remaining visual, confluence, echo-weaving, capsule, cross-product, and native-render work is delivered or handed off explicitly.

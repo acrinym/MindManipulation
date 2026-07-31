@@ -1,8 +1,9 @@
 # PySbagen × SBaGenX Differentiation and Interoperability Beadtrain
 
 **Date:** July 31, 2026  
-**Status:** Active — implementation started  
+**Status:** Active — first native interoperability foundation implemented  
 **Branch:** `agent/sbagenx-interoperability-train-20260731`  
+**Pull request:** `#11` — Differentiate PySbagen and begin SBaGenX interoperability  
 **Source matrix:** `docs/planning/SBAGENX_DIFFERENTIATION_AND_INTEROP_MATRIX.md`  
 **SBaGenX reference:** `lm7137/SBaGenX@be7c74d378774a759f1e4149dc9df3617b4d0d3b`
 
@@ -10,42 +11,28 @@
 
 Make PySbagen the provenance-first, human-facing protocol and session operating layer for the SBaGen ecosystem while treating SBaGenX as the optional advanced native SBaGen engine.
 
-This train deliberately avoids rebuilding SBaGenX's `.sbg`/`.sbgf` editor, curve engine, mix effects, live parameter controls, native export stack, plotting system, packaging, or mobile frontend.
+PySbagen will not rebuild SBaGenX's `.sbg`/`.sbgf` editor, curve engine, mix effects, live controls, multivoice DSP, native export stack, plotting, packaging, or mobile frontend.
 
-At completion, PySbagen must be able to:
-
-- detect and qualify an installed SBaGenX executable or native library;
-- preserve exact SBaGenX version/API/capability identity;
-- validate and inspect SBG/SBGF through a version-gated native adapter;
-- optionally render through SBaGenX with complete provenance and discrepancy receipts;
-- retain the Python renderer as a portable fallback;
-- record session markers, user events, outcomes, and local preferences independently of the rendering backend;
-- run existing guided experiences through an explicit backend-selection policy;
-- preserve DRG and SBGF artifacts without pretending conversion is lossless;
-- never silently route work through an unqualified native backend.
-
-Creativity implementation remains deferred.
+SBaGenX remains optional. PySbagen's Python renderer remains the portable fallback and current guided-product engine.
 
 ## Boundaries
 
 - Do not copy SBaGenX source wholesale into PySbagen.
-- Do not vendor or redistribute SBaGenX binaries without a separate license/dependency review.
-- Do not make SBaGenX mandatory for DRG preservation, inspection, the local library, or existing Sleep Guide use.
+- Do not vendor or redistribute SBaGenX binaries without license/dependency review.
+- Do not make SBaGenX mandatory for DRG preservation, inspection, the local library, or Sleep Guide use.
 - Do not claim bit-identical cross-engine output unless fixture-proven.
-- Do not invent another curve language before supporting `.sbgf` preservation and native validation.
-- Do not independently recreate `mixspin`, `mixbeat`, `mixpulse`, `mixam`, native live ramps, or the SBaGenX editor.
-- Every native operation must record backend version, API version, capabilities, source identity, invocation policy, and output identity.
-- Unknown API revisions or missing symbols fail closed to inspection/fallback rather than guessing.
+- Do not invent another curve language before first-class `.sbgf` preservation.
+- Do not independently recreate confirmed SBaGenX DSP or editor capabilities.
+- Every native operation must record backend version, API version, source identity, and operation result.
+- Unknown API revisions and missing symbols fail closed.
 
 ---
-
-# Beads
 
 ## SBX-001 — Source-pinned differentiation matrix
 
 **Status:** complete
 
-Inspect the actual SBaGenX repository and classify proposed work as delegate, interoperate, shared/fallback, PySbagen-owned, or verify-later.
+Inspected the actual SBaGenX source and classified work as delegate, interoperate, shared/fallback, PySbagen-owned, or verify-later.
 
 **Delivered:** `docs/planning/SBAGENX_DIFFERENTIATION_AND_INTEROP_MATRIX.md`.
 
@@ -53,233 +40,150 @@ Inspect the actual SBaGenX repository and classify proposed work as delegate, in
 
 **Status:** complete
 
-Add a standard-library-only discovery surface for:
+Delivered:
 
-- `SBAGENX_BIN` and PATH executable lookup;
-- `SBAGENXLIB_PATH` and system shared-library lookup;
-- executable version probing;
+- `pysbagen/sbagenx_backend.py`;
+- `sbgpy-inspect backend`;
+- JSON and human reports;
+- `SBAGENX_BIN`, PATH, `SBAGENXLIB_PATH`, and system-library discovery;
+- executable identity from the real `sbagenx -h` banner;
 - `sbx_version()` and `sbx_api_version()`;
-- symbol-backed capabilities for native rendering, SBG/SBGF validation, container writing, live controls, and mix-stream processing;
-- text and deterministic JSON reports;
-- explicit fallback when SBaGenX is absent.
+- symbol-backed capability reporting;
+- discovery-only mode;
+- truthful distinction between candidate found and usable backend;
+- explicit Python-fallback reporting when absent.
 
-**Delivered:**
-
-- `pysbagen/sbagenx_backend.py`
-- `sbgpy-inspect backend`
-- unit tests using a fake native library
-
-Discovery does not yet authorize native rendering.
+Discovery does not authorize native rendering.
 
 ## SBX-003 — Version-gated native binding contract
 
-**Status:** queued  
-**Depends on:** SBX-002
+**Status:** complete for validation operations
 
-Build a narrow ctypes binding around only the symbols PySbagen actually uses.
+Delivered a narrow API-47 ctypes contract in `pysbagen/sbagenx_native.py`:
 
-Requirements:
+- exact function signatures for version, API, SBG validation, SBGF validation, and diagnostic cleanup;
+- exact API-47 `SbxDiagnostic` layout;
+- fail-closed API revision policy;
+- required-symbol checks;
+- native-memory cleanup;
+- empty-version and malformed/null-diagnostic defenses;
+- structured errors instead of fallback guesses.
 
-- exact argument/restype declarations;
-- API-version policy table;
-- symbol requirements per operation;
-- owned-memory cleanup for diagnostics/contexts/writers;
-- platform-safe loading and actionable errors;
-- no broad, untyped dynamic calls;
-- backend identity object reusable by manifests.
-
-**Acceptance:** Unknown or incomplete libraries produce a structured unavailable/unsupported result without crashing or changing fallback behavior.
+Render/context/writer bindings remain intentionally unimplemented until SBX-006.
 
 ## SBX-004 — Native SBG and SBGF validation adapter
 
-**Status:** queued  
-**Depends on:** SBX-003
+**Status:** foundation complete; dual-engine composition remains
 
-Expose native validation while preserving PySbagen's own compatibility report.
+Delivered:
 
-Requirements:
+- `validate_sbagenx_source()` public API;
+- `sbgpy-inspect backend --validate SOURCE`;
+- `.sbg` and `.sbgf` validation through qualified API 47;
+- immutable source byte count and SHA-256;
+- UTF-8 BOM, UTF-8, and Latin-1 source handling;
+- native severity/code/line/column/range/message diagnostics;
+- native library path, version, and API identity;
+- deterministic JSON and human reports.
 
-- validate source text without mutating it;
-- map native diagnostics to source line/column/severity/code;
-- record native engine/API identity;
-- retain both PySbagen and SBaGenX findings when they disagree;
-- never let native success erase PySbagen loss/provenance warnings.
+Still required before this bead is fully closed:
 
-**Acceptance:** One report can show Python-parser findings, native findings, and discrepancies side by side.
+- compose native findings beside PySbagen's own import/compatibility findings;
+- produce an explicit discrepancy section when the engines disagree;
+- ensure native success never weakens PySbagen blockers or provenance warnings.
 
 ## SBX-005 — SBGF preservation and inspectable protocol identity
 
-**Status:** queued  
-**Depends on:** SBX-004
+**Status:** queued
 
-Treat `.sbgf` as a first-class preserved artifact:
-
-- immutable source bytes and hash;
-- encoding and syntax diagnostics;
-- declared parameters, solve directive, expression families, and source locations where available;
-- referenced media and source dependencies;
-- native version/API used for validation;
-- explicit rendered-only/equivalent/partial states for conversions.
-
-Do not attempt to replace `.sbgf` with a new PySbagen project language.
+Treat `.sbgf` as a first-class preserved artifact with immutable bytes/hash, encoding, parameters, solve directives, expression families, dependencies, native diagnostics, and explicit conversion-loss states. Do not replace it with a competing project language.
 
 ## SBX-006 — Optional native render backend with receipts
 
-**Status:** queued  
-**Depends on:** SBX-003 through SBX-005
+**Status:** queued
 
-Add explicit backend selection:
-
-- `python` — current PySbagen renderer;
-- `sbagenx` — qualified native library;
-- `auto` — select native only for fixture-qualified semantics, otherwise Python or blocked according to policy.
-
-Every render receipt must include:
-
-- selected backend and reason;
-- SBaGenX version/API and capability set when native;
-- source hash and import report;
-- sample rate, format, duration, and output hash;
-- unsupported/approximated fields;
-- cross-engine comparison status when available.
-
-No silent subprocess rendering. Prefer the native library; CLI invocation is a separately disclosed fallback only if required.
+Add explicit `python`, `sbagenx`, and capability-gated `auto` backend selection. Prefer the native library; never silently shell out. Receipts must record backend/version/API, source identity, format, duration, configuration, output hash, and discrepancies.
 
 ## SBX-007 — Cross-engine parity and discrepancy laboratory
 
-**Status:** queued  
-**Depends on:** SBX-006
+**Status:** queued
 
-Build representative legal/synthetic fixtures for shared semantics:
-
-- binaural, monaural, isochronic;
-- finite and open-ended sequences;
-- transitions and silence;
-- white/pink noise;
-- background mix where both engines support it.
-
-Measure:
-
-- duration/frame count;
-- RMS/peak and channel relationships;
-- dominant frequencies and beat relationships;
-- transition boundaries;
-- deterministic repeat behavior;
-- documented expected differences.
-
-The output is a product discrepancy report, not a demand for bit identity.
+Use legal/synthetic fixtures for shared binaural, monaural, isochronic, timing, transition, silence, noise, and mix semantics. Compare duration, frames, RMS/peak, channel/frequency relationships, transitions, and deterministic repeat behavior without demanding bit identity.
 
 ## SBX-008 — Guided-product backend policy
 
-**Status:** queued  
-**Depends on:** SBX-006, SBX-007
+**Status:** queued
 
-Allow guided products to request capabilities rather than hard-code engines.
-
-Examples:
-
-- Sleep Guide can remain on the Python journey engine by default;
-- an advanced imported SBGF session may require SBaGenX;
-- a recipe may be portable, native-preferred, or native-required;
-- backend choice must be visible before playback and saved in the exact recipe/session manifest.
-
-Existing guided journeys must remain usable without SBaGenX installed.
+Allow products to request capabilities rather than hard-code engines. Sleep Guide remains portable by default; SBGF or advanced native recipes may be native-preferred or native-required. Save the visible selection reason in every exact recipe/session record.
 
 ## SBX-009 — Backend-independent session markers and event ledger
 
-**Status:** queued  
-**Depends on:** SBX-006
+**Status:** queued
 
-Build a PySbagen-owned append-only session ledger:
-
-- named and quick markers;
-- transport-relative and wall-clock time;
-- backend identity and position;
-- active recipe/protocol hash;
-- native telemetry snapshot when available;
-- optional post-session notes;
-- privacy-safe JSON/CSV export.
-
-This feature belongs above either renderer and must not be buried in one GUI.
+Build append-only named/quick markers with transport/wall-clock time, backend identity, protocol hash, telemetry snapshot where available, post-session notes, and privacy-safe JSON/CSV export.
 
 ## SBX-010 — Outcome history and local preference learning
 
-**Status:** queued  
-**Depends on:** SBX-009
+**Status:** queued
 
-Add local records for:
-
-- what was played and through which backend/path;
-- exact parameters and source identities;
-- intended purpose;
-- immediate and delayed subjective response;
-- comfort/adverse effects;
-- preference signals;
-- repeatability and protocol-version differences.
-
-Learning remains local, explainable, reversible, and recipe-specific. Do not infer medical efficacy.
+Record exact played protocol/backend/path, intended purpose, immediate and delayed response, comfort/adverse effects, preference signals, and version differences. Learning remains local, explainable, reversible, and non-medical.
 
 ## SBX-011 — One-shot cue and orchestration layer
 
-**Status:** queued after verification  
-**Depends on:** SBX-006, SBX-009
+**Status:** queued after upstream verification
 
-First verify whether current SBaGenX provides a completed timed one-shot cue path.
-
-If absent, implement cues as PySbagen session orchestration above the selected renderer:
-
-- exact or event-relative trigger time;
-- source hash, gain, pan, ducking, overlap, and retrigger policy;
-- no reset of continuous native/Python synthesis;
-- event-ledger entry and output/session receipt.
-
-Do not fork SBaGenX DSP merely to add orchestration.
+First verify whether current SBaGenX already provides timed one-shot cues. If absent, implement cues above the selected renderer with exact trigger policy, source identity, gain/pan/ducking/overlap, continuous-renderer preservation, ledger entry, and receipt.
 
 ## SBX-012 — Installation, discovery, and license boundary
 
-**Status:** queued  
-**Depends on:** SBX-003, SBX-006
+**Status:** partial
 
-Document and qualify:
-
-- separate SBaGenX installation;
-- environment overrides and system discovery;
-- supported API ranges;
-- Windows, Linux, and macOS library names/locations;
-- optional-dependency behavior;
-- license and attribution responsibilities;
-- diagnostics for incompatible/missing runtime dependencies.
-
-PySbagen packages must not silently bundle third-party native artifacts.
+The initial guide documents separate installation, environment overrides, candidate/qualification semantics, API-47 scope, and non-vendoring policy. Still required: platform-specific runtime locations, dependency failures, supported future API table, and complete attribution/license packaging guidance.
 
 ## SBX-013 — End-to-end qualification and completion receipt
 
-**Status:** queued  
-**Depends on:** SBX-001 through SBX-012
+**Status:** queued
 
-Prove complete journeys:
+Required journeys:
 
-1. no SBaGenX installed → Python/inspection paths continue normally;
-2. native library installed → version/capability report;
-3. SBG validation → dual-engine findings and discrepancy record;
-4. SBGF preservation → native validation → exact identity;
-5. explicit native render → provenance sidecar;
-6. auto backend selection → visible reason;
-7. guided Sleep journey remains portable;
-8. session marker → outcome record → local preference history;
-9. incompatible API → safe refusal/fallback;
-10. existing DRG, compatibility, library, and sleep tests remain green.
+1. no SBaGenX installed → existing Python/inspection paths remain usable;
+2. native candidate → truthful identity/capability report;
+3. incompatible API → safe refusal;
+4. SBG validation → dual-engine findings;
+5. SBGF preservation → native validation → exact identity;
+6. explicit native render → provenance sidecar;
+7. visible automatic backend decision;
+8. portable guided Sleep journey;
+9. marker → outcome → preference history;
+10. existing DRG, compatibility, library, and sleep suites remain green.
+
+## Current qualification receipt
+
+Focused tests authored for:
+
+- executable help-banner identity;
+- native library version/API/symbol discovery;
+- discovered-versus-qualified state;
+- missing backend/configured path reporting;
+- exact API-47 diagnostic decoding;
+- rejection of unknown API revisions;
+- rejection of malformed null diagnostic pointers;
+- Latin-1 source preservation and SHA-256 identity.
+
+A previous isolated run passed the initial probe and native-binding tests. After the latest hardening commits, this runtime could not clone the public branch because outbound DNS access was unavailable, and no GitHub Actions run appeared for the current PR head. The full repository suite therefore remains an explicit pre-merge requirement rather than an implied success.
+
+CodeRabbit's full review was rate-limited. Its available static precheck reported low helper-docstring coverage; the new backend module was then fully documented. No actionable inline review thread has been posted.
 
 ## Definition of done
 
 This train is complete only when:
 
-- PySbagen no longer plans to duplicate confirmed SBaGenX features;
+- confirmed SBaGenX features are no longer scheduled for duplicate implementation;
 - optional native integration is version/symbol gated;
 - native validation/rendering cannot bypass compatibility truth or provenance;
-- SBGF and DRG remain preserved first-class artifacts;
+- SBGF and DRG remain first-class preserved artifacts;
 - backend choice is visible and reproducible;
 - session intelligence works above either renderer;
-- the Python fallback remains supported;
-- tests and package builds pass across supported Python versions;
-- the completion receipt lists any remaining verify-later rows honestly.
+- Python fallback remains supported;
+- full tests and package builds pass before merge;
+- remaining verify-later rows are resolved honestly.

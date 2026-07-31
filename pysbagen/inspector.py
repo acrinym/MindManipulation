@@ -49,6 +49,7 @@ class AudioSourceReport:
     clipping_samples: int | None = None
     stereo_correlation: float | None = None
     near_mono: bool | None = None
+    anti_phase: bool | None = None
     resampling_required: bool | None = None
     state: CompatibilityState = CompatibilityState.UNKNOWN
     suitability: str = "not analyzed"
@@ -70,7 +71,11 @@ class AudioSourceReport:
             f"Sample rate: {self.sample_rate if self.sample_rate is not None else 'unknown'}",
             f"Duration: {self.duration:.3f}s" if self.duration is not None else "Duration: unknown",
             f"Peak: {self.peak:.6f}" if self.peak is not None else "Peak: not sampled",
-            f"Stereo correlation: {self.stereo_correlation:.6f}" if self.stereo_correlation is not None else "Stereo correlation: unavailable",
+            (
+                f"Stereo correlation: {self.stereo_correlation:.6f}"
+                if self.stereo_correlation is not None
+                else "Stereo correlation: unavailable"
+            ),
             f"Analysis backend: {self.analysis_backend or 'none'}",
         ]
         if self.warnings:
@@ -98,12 +103,23 @@ class AudioPathQualification:
         return result
 
     def to_text(self) -> str:
-        lines = [f"Method: {self.method}", f"Route: {self.route}", f"Channels: {self.channels}", f"Sample rate: {self.sample_rate}", f"State: {self.state.value}", f"Safe to start: {'yes' if self.safe_to_start else 'no'}"]
+        lines = [
+            f"Method: {self.method}",
+            f"Route: {self.route}",
+            f"Channels: {self.channels}",
+            f"Sample rate: {self.sample_rate}",
+            f"State: {self.state.value}",
+            f"Safe to start: {'yes' if self.safe_to_start else 'no'}",
+        ]
         lines.extend(f"  {finding}" for finding in self.findings)
         return "\n".join(lines)
 
 
-def build_timeline(artifact: ImportedArtifact, *, duration: float | None = None) -> list[TimelineSegment]:
+def build_timeline(
+    artifact: ImportedArtifact,
+    *,
+    duration: float | None = None,
+) -> list[TimelineSegment]:
     schedule = sorted(artifact.schedule, key=lambda item: item[0])
     if not schedule:
         return []
@@ -113,8 +129,21 @@ def build_timeline(artifact: ImportedArtifact, *, duration: float | None = None)
     for index, (start, tokens) in enumerate(schedule):
         active = _apply_label_event(active, artifact.tone_sets, tokens)
         next_start = schedule[index + 1][0] if index + 1 < len(schedule) else final_end
-        layers = tuple(TimelineLayer(label, type(spec).__name__, _spec_parameters(spec)) for label in active for spec in artifact.tone_sets.get(label, []))
-        segments.append(TimelineSegment(float(start), float(next_start) if next_start is not None else None, tuple(active), layers, bool(tokens and tokens[-1] == "->"), tuple(tokens)))
+        layers = tuple(
+            TimelineLayer(label, type(spec).__name__, _spec_parameters(spec))
+            for label in active
+            for spec in artifact.tone_sets.get(label, [])
+        )
+        segments.append(
+            TimelineSegment(
+                float(start),
+                float(next_start) if next_start is not None else None,
+                tuple(active),
+                layers,
+                bool(tokens and tokens[-1] == "->"),
+                tuple(tokens),
+            )
+        )
     return segments
 
 
@@ -129,14 +158,25 @@ def timeline_to_text(timeline: list[TimelineSegment]) -> str:
     for segment in timeline:
         end = f"{segment.end:.3f}s" if segment.end is not None else "open"
         active = ", ".join(segment.active_tone_sets) or "silence"
-        lines.append(f"  {segment.start:.3f}s – {end}: {active}{' -> crossfade' if segment.transition_to_next else ''}")
+        lines.append(
+            f"  {segment.start:.3f}s – {end}: {active}"
+            f"{' -> crossfade' if segment.transition_to_next else ''}"
+        )
         for layer in segment.layers:
-            parameters = ", ".join(f"{key}={value}" for key, value in layer.parameters.items())
-            lines.append(f"    {layer.tone_set}: {layer.component_type}({parameters})")
+            parameters = ", ".join(
+                f"{key}={value}" for key, value in layer.parameters.items()
+            )
+            lines.append(
+                f"    {layer.tone_set}: {layer.component_type}({parameters})"
+            )
     return "\n".join(lines)
 
 
-def inspect_audio_source(path: str | Path, *, target_sample_rate: int = 44100) -> AudioSourceReport:
+def inspect_audio_source(
+    path: str | Path,
+    *,
+    target_sample_rate: int = 44100,
+) -> AudioSourceReport:
     source = Path(path).expanduser().resolve()
     report = AudioSourceReport(path=str(source), exists=source.is_file())
     if not report.exists:
@@ -144,130 +184,289 @@ def inspect_audio_source(path: str | Path, *, target_sample_rate: int = 44100) -
         report.suitability = "source file is unavailable"
         report.warnings.append("The referenced audio file does not exist.")
         return report
+
     try:
         import soundfile as sf
+
         info = sf.info(source)
-        report.container, report.codec, report.channels, report.sample_rate, report.frames, report.duration = info.format, info.subtype, info.channels, info.samplerate, info.frames, info.duration
+        report.container = info.format
+        report.codec = info.subtype
+        report.channels = info.channels
+        report.sample_rate = info.samplerate
+        report.frames = info.frames
+        report.duration = info.duration
         report.analysis_backend = "soundfile"
         sample_limit = min(info.frames, max(info.samplerate * 30, 1))
         with sf.SoundFile(source) as handle:
-            _analyze_samples(report, handle.read(sample_limit, dtype="float32", always_2d=True))
+            samples = handle.read(sample_limit, dtype="float32", always_2d=True)
+            _analyze_samples(report, samples)
     except Exception as exc:
         report.warnings.append(f"SoundFile analysis was unavailable: {exc}")
         _inspect_with_ffprobe(report, source)
+
     if report.sample_rate is not None:
         report.resampling_required = report.sample_rate != target_sample_rate
         if report.resampling_required:
-            report.warnings.append(f"Source will be resampled from {report.sample_rate} Hz to {target_sample_rate} Hz.")
+            report.warnings.append(
+                f"Source will be resampled from {report.sample_rate} Hz "
+                f"to {target_sample_rate} Hz."
+            )
     _classify_source(report)
     return report
 
 
-def qualify_audio_path(*, method: str, route: str, channels: int, sample_rate: int, spatial_processing: bool = False, normalization: bool = False, bluetooth: bool = False) -> AudioPathQualification:
-    method, route = method.strip().lower(), route.strip().lower()
+def qualify_audio_path(
+    *,
+    method: str,
+    route: str,
+    channels: int,
+    sample_rate: int,
+    spatial_processing: bool = False,
+    normalization: bool = False,
+    bluetooth: bool = False,
+) -> AudioPathQualification:
+    method = method.strip().lower()
+    route = route.strip().lower()
+    if channels <= 0:
+        raise ValueError("Output channel count must be positive")
+    if sample_rate <= 0:
+        raise ValueError("Output sample rate must be positive")
+
     findings: list[str] = []
-    state, safe = CompatibilityState.SUPPORTED, True
+    state = CompatibilityState.SUPPORTED
+    safe = True
     if channels < 2 and method in {"binaural", "mixed"}:
-        findings.append("Binaural content requires two independent output channels; mono/downmix routing blocks playback.")
-        state, safe = CompatibilityState.UNSAFE_TO_RENDER, False
+        findings.append(
+            "Binaural content requires two independent output channels; "
+            "mono/downmix routing blocks playback."
+        )
+        state = CompatibilityState.UNSAFE_TO_RENDER
+        safe = False
     if method == "binaural" and route not in {"headphones", "earbuds"}:
-        findings.append("Binaural separation is not reliable on the selected route; use headphones or earbuds.")
-        state, safe = CompatibilityState.UNSAFE_TO_RENDER, False
+        findings.append(
+            "Binaural separation is not reliable on the selected route; "
+            "use headphones or earbuds."
+        )
+        state = CompatibilityState.UNSAFE_TO_RENDER
+        safe = False
     if spatial_processing:
-        findings.append("Spatial enhancement can cross-mix left and right channels and invalidate intended separation.")
-        state, safe = CompatibilityState.UNSAFE_TO_RENDER, False
+        findings.append(
+            "Spatial enhancement can cross-mix left and right channels and "
+            "invalidate intended separation."
+        )
+        state = CompatibilityState.UNSAFE_TO_RENDER
+        safe = False
     if sample_rate < 32000:
-        findings.append("The negotiated sample rate is unusually low for this product path.")
-        if safe: state = CompatibilityState.PARTIAL
+        findings.append(
+            "The negotiated sample rate is unusually low for this product path."
+        )
+        if safe:
+            state = CompatibilityState.PARTIAL
     if normalization:
-        findings.append("Loudness normalization may alter relative layer amplitudes; disable it for protocol fidelity.")
-        if safe and state is CompatibilityState.SUPPORTED: state = CompatibilityState.PARTIAL
+        findings.append(
+            "Loudness normalization may alter relative layer amplitudes; "
+            "disable it for protocol fidelity."
+        )
+        if safe and state is CompatibilityState.SUPPORTED:
+            state = CompatibilityState.PARTIAL
     if bluetooth:
-        findings.append("Bluetooth may add codec processing, resampling, and channel handling outside PySbagen's control.")
-        if safe and state is CompatibilityState.SUPPORTED: state = CompatibilityState.PARTIAL
+        findings.append(
+            "Bluetooth may add codec processing, resampling, and channel "
+            "handling outside PySbagen's control."
+        )
+        if safe and state is CompatibilityState.SUPPORTED:
+            state = CompatibilityState.PARTIAL
     if not findings:
-        findings.append("Stereo route and processing declarations are compatible with the selected method.")
-    return AudioPathQualification(method, route, int(channels), int(sample_rate), bool(spatial_processing), bool(normalization), bool(bluetooth), state, safe, findings)
+        findings.append(
+            "Stereo route and processing declarations are compatible with "
+            "the selected method."
+        )
+    return AudioPathQualification(
+        method,
+        route,
+        int(channels),
+        int(sample_rate),
+        bool(spatial_processing),
+        bool(normalization),
+        bool(bluetooth),
+        state,
+        safe,
+        findings,
+    )
 
 
-def _apply_label_event(active: list[str], tone_sets: dict[str, list[Any]], tokens: list[str]) -> list[str]:
+def _apply_label_event(
+    active: list[str],
+    tone_sets: dict[str, list[Any]],
+    tokens: list[str],
+) -> list[str]:
     items = tokens[:-1] if tokens and tokens[-1] == "->" else tokens
     if not items:
         return list(active)
-    active = [] if items[0].lower() in {"-", "off", "alloff"} or not items[0].startswith(("+", "-")) else list(active)
+    active = (
+        []
+        if items[0].lower() in {"-", "off", "alloff"}
+        or not items[0].startswith(("+", "-"))
+        else list(active)
+    )
     for token in items:
         lowered = token.lower()
         if lowered in {"-", "off", "alloff"}:
-            if lowered in {"-", "alloff"}: active = []
+            if lowered in {"-", "alloff"}:
+                active = []
             continue
-        operation, label = (token[0] if token.startswith(("+", "-")) else "+"), token.lstrip("+-")
-        if label not in tone_sets: continue
-        if operation == "-": active = [item for item in active if item != label]
-        elif label not in active: active.append(label)
+        operation = token[0] if token.startswith(("+", "-")) else "+"
+        label = token.lstrip("+-")
+        if label not in tone_sets:
+            continue
+        if operation == "-":
+            active = [item for item in active if item != label]
+        elif label not in active:
+            active.append(label)
     return active
 
 
 def _spec_parameters(spec: Any) -> dict[str, Any]:
-    values = asdict(spec) if is_dataclass(spec) else ({key: value for key, value in vars(spec).items() if not key.startswith("_")} if hasattr(spec, "__dict__") else {"value": repr(spec)})
-    return {key: str(value) if isinstance(value, Path) else value if isinstance(value, (str, int, float, bool)) or value is None else repr(value) for key, value in values.items()}
+    if is_dataclass(spec):
+        values = asdict(spec)
+    elif hasattr(spec, "__dict__"):
+        values = {
+            key: value
+            for key, value in vars(spec).items()
+            if not key.startswith("_")
+        }
+    else:
+        values = {"value": repr(spec)}
+    return {
+        key: (
+            str(value)
+            if isinstance(value, Path)
+            else value
+            if isinstance(value, (str, int, float, bool)) or value is None
+            else repr(value)
+        )
+        for key, value in values.items()
+    }
 
 
 def _analyze_samples(report: AudioSourceReport, samples: np.ndarray) -> None:
     if samples.size == 0:
-        report.peak, report.clipping_samples = 0.0, 0
+        report.peak = 0.0
+        report.clipping_samples = 0
         return
     report.peak = float(np.max(np.abs(samples)))
     report.clipping_samples = int(np.count_nonzero(np.abs(samples) >= 0.999))
-    if samples.shape[1] >= 2:
-        left, right = samples[:, 0].astype(np.float64), samples[:, 1].astype(np.float64)
-        if np.std(left) > 1e-12 and np.std(right) > 1e-12:
-            report.stereo_correlation = float(np.corrcoef(left, right)[0, 1])
-            report.near_mono = abs(report.stereo_correlation) >= 0.995
-        else:
-            report.near_mono = bool(np.allclose(left, right, atol=1e-6))
-            report.stereo_correlation = 1.0 if report.near_mono else None
+    if samples.shape[1] < 2:
+        return
+
+    left = samples[:, 0].astype(np.float64)
+    right = samples[:, 1].astype(np.float64)
+    if np.std(left) > 1e-12 and np.std(right) > 1e-12:
+        correlation = float(np.corrcoef(left, right)[0, 1])
+        report.stereo_correlation = correlation
+        report.near_mono = correlation >= 0.995
+        report.anti_phase = correlation <= -0.995
+    else:
+        report.near_mono = bool(np.allclose(left, right, atol=1e-6))
+        report.anti_phase = False
+        report.stereo_correlation = 1.0 if report.near_mono else None
 
 
 def _inspect_with_ffprobe(report: AudioSourceReport, source: Path) -> None:
     executable = shutil.which("ffprobe")
     if executable is None:
-        report.warnings.append("ffprobe is not installed, so only file existence could be verified.")
+        report.warnings.append(
+            "ffprobe is not installed, so only file existence could be verified."
+        )
         return
-    command = [executable, "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=codec_name,channels,sample_rate,duration,nb_frames:format=format_name,duration", "-of", "json", str(source)]
+    command = [
+        executable,
+        "-v",
+        "error",
+        "-select_streams",
+        "a:0",
+        "-show_entries",
+        "stream=codec_name,channels,sample_rate,duration,nb_frames:"
+        "format=format_name,duration",
+        "-of",
+        "json",
+        str(source),
+    ]
     try:
-        payload = json.loads(subprocess.run(command, check=True, capture_output=True, text=True).stdout)
-        stream, format_info = (payload.get("streams") or [{}])[0], payload.get("format") or {}
-        report.codec, report.container = stream.get("codec_name"), format_info.get("format_name")
-        report.channels, report.sample_rate, report.frames = _optional_int(stream.get("channels")), _optional_int(stream.get("sample_rate")), _optional_int(stream.get("nb_frames"))
-        report.duration = _optional_float(stream.get("duration") or format_info.get("duration"))
+        completed = subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        payload = json.loads(completed.stdout)
+        stream = (payload.get("streams") or [{}])[0]
+        format_info = payload.get("format") or {}
+        report.codec = stream.get("codec_name")
+        report.container = format_info.get("format_name")
+        report.channels = _optional_int(stream.get("channels"))
+        report.sample_rate = _optional_int(stream.get("sample_rate"))
+        report.frames = _optional_int(stream.get("nb_frames"))
+        report.duration = _optional_float(
+            stream.get("duration") or format_info.get("duration")
+        )
         report.analysis_backend = "ffprobe-metadata"
-        report.warnings.append("Waveform suitability could not be sampled; metadata-only qualification was used.")
+        report.warnings.append(
+            "Waveform suitability could not be sampled; metadata-only "
+            "qualification was used."
+        )
     except (OSError, subprocess.CalledProcessError, json.JSONDecodeError) as exc:
         report.warnings.append(f"ffprobe analysis failed: {exc}")
 
 
 def _classify_source(report: AudioSourceReport) -> None:
     if report.channels is None or report.sample_rate is None:
-        report.state, report.suitability = CompatibilityState.UNKNOWN, "metadata is insufficient for reliable qualification"
+        report.state = CompatibilityState.UNKNOWN
+        report.suitability = "metadata is insufficient for reliable qualification"
         return
-    state, suitability = CompatibilityState.SUPPORTED, "usable as a local audio layer"
+
+    state = CompatibilityState.SUPPORTED
+    suitability = "usable as a local audio layer"
     if report.channels < 2:
-        state, suitability = CompatibilityState.PARTIAL, "usable as a mono bed, not as an independently separated binaural source"
-        report.warnings.append("Source is mono; it cannot preserve independent left/right source content.")
+        state = CompatibilityState.PARTIAL
+        suitability = (
+            "usable as a mono bed, not as an independently separated "
+            "binaural source"
+        )
+        report.warnings.append(
+            "Source is mono; it cannot preserve independent left/right source content."
+        )
     if report.near_mono:
-        state, suitability = CompatibilityState.PARTIAL, "stereo container is effectively mono or strongly correlated"
+        state = CompatibilityState.PARTIAL
+        suitability = "stereo container is effectively mono or strongly correlated"
         report.warnings.append("Left and right channels are nearly identical.")
+    if report.anti_phase:
+        state = CompatibilityState.PARTIAL
+        suitability = (
+            "strongly anti-correlated stereo; usable with mono-downmix caution"
+        )
+        report.warnings.append(
+            "Left and right channels are strongly anti-correlated; a mono "
+            "downmix may cancel much of the signal."
+        )
     if report.clipping_samples:
         state = CompatibilityState.PARTIAL
-        report.warnings.append(f"Detected {report.clipping_samples} near-clipping samples in the analyzed window.")
+        report.warnings.append(
+            f"Detected {report.clipping_samples} near-clipping samples in the "
+            "analyzed window."
+        )
     if report.resampling_required and state is CompatibilityState.SUPPORTED:
-        state, suitability = CompatibilityState.EQUIVALENT, "usable with disclosed resampling"
-    report.state, report.suitability = state, suitability
+        state = CompatibilityState.EQUIVALENT
+        suitability = "usable with disclosed resampling"
+    report.state = state
+    report.suitability = suitability
 
 
 def _optional_int(value: Any) -> int | None:
-    try: return int(value)
-    except (TypeError, ValueError): return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _optional_float(value: Any) -> float | None:

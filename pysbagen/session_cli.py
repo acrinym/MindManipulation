@@ -205,6 +205,11 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.command == "render":
             stored = archive.get(args.session_id)
+            if stored.plan.backend_policy == "sbagenx":
+                raise ValueError(
+                    "This plan requires SBaGenX, but native rendering is not qualified yet; "
+                    "use a Python plan or wait for the typed native-render receipt train."
+                )
             request = sleep_request_from_manifest(stored.plan.recipe_manifest)
             outfile = Path(args.outfile or f"{_slug(stored.plan.title)}-{stored.plan.session_id[:8]}.wav")
             result = write_audio(render_sleep(request), outfile)
@@ -224,6 +229,11 @@ def main(argv: list[str] | None = None) -> int:
                     "recipe_sha256": stored.plan.recipe_sha256,
                     "backend_policy": stored.plan.backend_policy,
                     "actual_backend": "python",
+                    "backend_reason": (
+                        "explicit Python policy"
+                        if stored.plan.backend_policy == "python"
+                        else "auto policy selected the qualified portable Python backend; native rendering is not enabled"
+                    ),
                 },
             )
             print(f"Rendered {stored.plan.memory_phrase}")

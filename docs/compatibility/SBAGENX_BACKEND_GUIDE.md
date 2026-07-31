@@ -46,7 +46,7 @@ Without overrides, PySbagen checks PATH for `sbagenx` and asks the platform dyna
 
 The probe records where available:
 
-- executable path and `--version` response;
+- executable path and version parsed from the first `sbagenx -h` banner line;
 - native-library path;
 - `sbx_version()`;
 - `sbx_api_version()`;
@@ -57,6 +57,8 @@ The probe records where available:
   - container writing;
   - live parameter control;
   - mix-stream processing.
+
+SBaGenX uses `-V` for master volume; it does not publish a `--version` contract in the reviewed source. The adapter therefore uses the documented help banner for CLI identity and the native functions for authoritative library identity.
 
 A path or version is not permission to render. Later beads add exact ctypes signatures, API-version gates, cleanup rules, validation adapters, parity fixtures, and provenance sidecars before native output becomes selectable.
 
@@ -72,7 +74,7 @@ When SBaGenX is not installed, the command reports that explicitly. Existing PyS
 
 ## Safety and trust boundary
 
-Running the normal probe may execute the configured `sbagenx --version` command and load the configured shared library to read its API and symbols. Use `--discover-only` when inspecting an unfamiliar path without executing/loading it.
+Running the normal probe may execute the configured `sbagenx -h` command and load the configured shared library to read its API and symbols. Use `--discover-only` when inspecting an unfamiliar path without executing/loading it.
 
 PySbagen does not download, install, vendor, or update SBaGenX automatically.
 

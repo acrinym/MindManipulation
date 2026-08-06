@@ -9,6 +9,15 @@ from .api import (
     write_audio,
 )
 from .compatibility import CompatibilityState, ImportReport, RenderDisposition
+from .constellation import (
+    ConstellationEdge,
+    ConstellationGraph,
+    ConstellationNode,
+    build_constellation,
+    render_constellation_html,
+    write_constellation_html,
+    write_constellation_json,
+)
 from .importers import ImportedArtifact, import_artifact, import_drg, import_sbg
 from .interoperability import EngineDiscrepancy, InteroperabilityReport, inspect_with_sbagenx
 from .living_sessions import (
@@ -43,6 +52,9 @@ __all__ = [
     "AffectSnapshot",
     "BackendCapability",
     "CompatibilityState",
+    "ConstellationEdge",
+    "ConstellationGraph",
+    "ConstellationNode",
     "EngineDiscrepancy",
     "ImportReport",
     "ImportedArtifact",
@@ -64,6 +76,7 @@ __all__ = [
     "SleepRequest",
     "StoredSession",
     "UnsupportedSBaGenXAPI",
+    "build_constellation",
     "build_sleep_recipe",
     "create_child_sleep_plan",
     "create_sleep_plan",
@@ -75,11 +88,14 @@ __all__ = [
     "inspect_with_sbagenx",
     "probe_sbagenx",
     "recommend_child_mode",
+    "render_constellation_html",
     "render_schedule",
     "render_sleep",
     "render_specs",
     "sleep_request_from_manifest",
     "validate_sbagenx_source",
     "write_audio",
+    "write_constellation_html",
+    "write_constellation_json",
 ]
 __version__ = "0.4.0"

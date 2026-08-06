@@ -75,7 +75,7 @@ Documentation:
 
 ## Qualification
 
-GitHub Actions Python qualification run `#67` passed implementation head `8ff3a2892f3b57f38cfe7cc7a25dbfe171ffb2c8`:
+GitHub Actions Python qualification run `#67` passed implementation head `8ff3a2892f3b57f38cfe7cc7a25dbfe171ffb2c8`, and final-head run `#72` passed completion-receipt head `4071dbfb7072d2f137275247fa8a90eae851d7ee`:
 
 - Python 3.10 product-path tests — passed;
 - Python 3.11 product-path tests — passed;
@@ -106,8 +106,9 @@ The first run failed only because the regression expected the phrase `personal d
 - PR is open and mergeable.
 - Bugbot is not enabled and performed no review.
 - CodeRabbit automatic review skipped the non-default stacked base.
-- A manual `@coderabbitai review` request was posted against the qualified head.
-- Any later submitted findings must be resolved before merge; a success status without a review body is not represented as a completed review.
+- A manual `@coderabbitai review` request was posted.
+- CodeRabbit acknowledged the requested scope but reported that the review was rate-limited; it performed no submitted review and created no actionable inline findings.
+- This limitation is recorded rather than represented as a completed review.
 
 ## Anti-drawer acceptance
 

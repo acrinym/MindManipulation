@@ -1,174 +1,156 @@
 # PySbagen Current Product Priority
 
-**Date:** July 31, 2026  
-**Status:** Compatibility and native validation foundations delivered; Living Sessions is the active differentiated product train
-
-## Delivered compatibility foundation
-
-The I-Doser/SBaGen compatibility, preservation, inspection, qualification, and local-library train was merged through PR `#9` at `0c95a67ca65db22d6441b123a5709bcaf929a064`.
-
-Delivered capabilities remain:
-
-1. honest SBG/DRG import reports and render dispositions;
-2. complete DRG package preservation;
-3. original-SBaGen semantic compatibility matrix;
-4. timeline/source inspection before playback;
-5. audio-source and listening-path qualification;
-6. local-first provenance library.
+**Date:** August 5, 2026  
+**Status:** Constellation qualified; Living Sessions remains the active differentiated product line
 
 ## Product boundary
 
-A source-level review of `lm7137/SBaGenX` showed that rebuilding the modern SBaGen workstation in Python would duplicate active native work.
+> SBaGenX performs advanced native SBaGen DSP and authoring. PySbagen preserves, explains, guides, remembers, navigates, and learns locally.
 
-Therefore:
+PySbagen will not rebuild the modern SBaGen workstation in Python.
 
-> SBaGenX performs advanced native SBaGen DSP and authoring. PySbagen preserves, explains, guides, remembers, and learns locally.
-
-The broad workstation recreation train remains only as a superseded record:
-
-- `.beads/pysbagen_experimenter_workstation_train_2026_07_31.md`
-
-The authoritative boundary remains:
+Authoritative boundary:
 
 - `docs/planning/SBAGENX_DIFFERENTIATION_AND_INTEROP_MATRIX.md`
 
-## Stacked active work
+The broad workstation recreation plan remains superseded:
 
-### Interoperability foundation
+- `.beads/pysbagen_experimenter_workstation_train_2026_07_31.md`
 
-Branch and PR:
+## Delivered and stacked foundations
 
-- `agent/sbagenx-interoperability-train-20260731`
-- PR `#11` — **Differentiate PySbagen and begin SBaGenX interoperability**
+### Compatibility and preservation
 
-Delivered there:
+Merged through PR `#9`:
+
+- honest SBG/DRG import reports and render dispositions;
+- complete DRG package preservation;
+- original-SBaGen semantic compatibility matrix;
+- timeline/source inspection before playback;
+- audio-source and listening-path qualification;
+- local-first provenance library.
+
+### SBaGenX interoperability
+
+PR `#11` / `agent/sbagenx-interoperability-train-20260731`:
 
 - optional SBaGenX executable/library discovery;
-- truthful candidate-versus-qualified status;
+- candidate-versus-qualified backend truth;
 - exact API-47 ctypes validation contract;
-- combined PySbagen/SBaGenX source-hash-bound discrepancy reports;
+- source-hash-bound PySbagen/SBaGenX discrepancy reports;
 - first-class SBGF preservation and local-library storage;
-- Python 3.10–3.13 qualification with 59 tests and a successful package build.
+- Python 3.10–3.13 qualification.
 
-Native rendering remains intentionally disabled until SBX-006 delivers typed render/context/writer bindings, parity fixtures, explicit selection policy, and complete receipts in the same change.
+Native rendering remains disabled until SBX-006 delivers typed render/context/writer bindings, parity fixtures, explicit backend selection, cleanup, and complete receipts together.
 
-### Active product train — Living Sessions
+### Living Sessions Wave 1
 
-Branch:
+PR `#12` / `agent/living-sessions-train-20260731`:
 
-- `agent/living-sessions-train-20260731`
+- memorable identity bound to exact recipe hashes;
+- stable lineage, parent, generation, and occurrence identity;
+- exact return;
+- one-change branch;
+- one-audible-change contrast;
+- bounded two-change wander;
+- append-only echoes and events;
+- immutable optional outcomes;
+- before/after affect context;
+- transparent next-mode rules;
+- local personal atlas;
+- backend-policy and output receipts;
+- `sbgpy-session` product command;
+- 68-test Python 3.10–3.13 qualification and package build.
 
-Train:
+### Living Sessions Constellation
 
-- `.beads/pysbagen_living_sessions_train_2026_07_31.md`
+PR `#13` / `agent/living-sessions-constellation-train-20260805`:
 
-Research synthesis:
+- truth-derived session nodes and parent edges;
+- deterministic generation and multi-lineage layout;
+- complete-lineage focus from a session ID;
+- self-contained offline HTML navigator;
+- title, motif, provenance, mutation, event, echo, outcome, and backend detail;
+- search and lineage/mode/state filters;
+- stable graph SHA-256 identity;
+- integrity warnings without invented repairs;
+- private and privacy-reduced exports;
+- machine-readable JSON snapshots;
+- `sbgpy-constellation` command;
+- packaged offline HTML template;
+- Python 3.10–3.13 qualification with **74 tests** and a successful source distribution/wheel build.
 
-- `docs/research/HTE_LIVING_SESSIONS_GAP_SYNTHESIS_2026_07_31.md`
+Train and receipt:
 
-The train uses the project-owner supplied `HTE-Newest.zip` as a reasoning source, especially its InvisiSynth, Learning, Affect, Parallel Oracle, Synthesis, Intersection, and Lateral concepts. No HTE runtime code is vendored.
+- `.beads/pysbagen_living_sessions_constellation_train_2026_08_05.md`
+- `.beads/pysbagen_living_sessions_constellation_train_2026_08_05_COMPLETION.md`
 
-## Why Living Sessions is first
+Guide:
 
-A more capable renderer does not by itself create a product someone returns to.
+- `docs/product/LIVING_SESSIONS_CONSTELLATION_GUIDE.md`
 
-PySbagen's differentiation is the continuing experience above either backend:
+## Why this is a durable product
 
-- memorable identities bound to exact recipe hashes;
-- exact returns instead of disposable regenerated files;
-- one-variable branches for understandable learning;
-- high-salience contrast after poor outcomes;
-- bounded two-change wander experiments;
-- local echoes and remembered moments;
-- optional affect-tagged outcomes;
-- transparent next-mode recommendations;
-- a personal lineage atlas that becomes more useful with honest history.
+The renderer is not the relationship.
 
-This is not a badge or streak layer. Continued use creates value because the archive gains memory, the user gains reproducible choices, and future sessions can build on known lineages.
+Continued use creates new value because PySbagen can now:
 
-## Current Living Sessions implementation
+- return to an exact remembered experience;
+- explain every variation;
+- preserve meaningful moments;
+- retain honest outcomes;
+- show ancestry and branch points;
+- navigate an accumulating constellation of personal session history;
+- remain inspectable, local, and backend-independent.
 
-### Identity and provenance
+This does not rely on points, badges, daily-pressure streaks, leaderboards, cloud accounts, hidden scores, or social comparison.
 
-- deterministic two-word title;
-- deterministic three-word motif;
-- exact recipe SHA-256;
-- stable lineage ID;
-- unique session occurrence ID;
-- parent and generation records.
+## Permission-gated side path
 
-### Variation modes
+Living Sessions may eventually have a useful relationship with Cycloside under `/newideas`, but that path is explicitly closed until Justin grants permission.
 
-- `return` — exact recipe, title, and motif;
-- `branch` — exactly one disclosed product-level change;
-- `contrast` — one high-salience disclosed change;
-- `wander` — at most two compatible disclosed changes, marked less causally interpretable.
+Authoritative gate:
 
-The user's stated sleep problem is never silently changed.
+- `docs/planning/CYCLOSIDE_LIVING_SESSIONS_PERMISSION_GATE.md`
 
-### Local memory
+Before any cross-project analysis, design, issue, branch, beadtrain, mockup, prototype, or implementation, ask Justin explicitly. Independent PySbagen and Cycloside work may continue; the cross-project path may not.
 
-- immutable plan JSON;
-- append-only event/echo JSONL;
-- immutable optional outcome JSON;
-- before/after valence, arousal, and agency context;
-- rating, comfort, would-repeat, notes, and tags;
-- lineage and echo queries.
+## Next original product train
 
-### Personal atlas
+**LIV-012 — Confluence Sessions** is queued but not started.
 
-- session and lineage counts;
-- completion and echo counts;
-- optional average rating and would-repeat rate;
-- optional average affect delta;
-- lineage title history;
-- descriptive local pattern candidates after repeated observations.
+Its purpose is to combine two parent lineages while preserving:
 
-Patterns remain descriptive personal records, not medical-efficacy claims.
+- both parent identities;
+- every inherited dimension;
+- every changed dimension;
+- causal uncertainty;
+- backend policy;
+- complete provenance;
+- reversibility to either parent.
 
-### Product command
+Confluence must remain separate from PR `#13`; do not broaden the qualified Constellation train into it.
 
-- `sbgpy-session new-sleep`
-- `sbgpy-session render`
-- `sbgpy-session mark`
-- `sbgpy-session finish`
-- `sbgpy-session next`
-- `sbgpy-session show`
-- `sbgpy-session list`
-- `sbgpy-session atlas`
+After Confluence, the existing queue remains:
 
-The current render path reconstructs the exact stored SleepRequest and records the actual Python backend, recipe identity, and output hash. Future SBaGenX rendering will plug into the same experience layer through an explicit qualified backend policy.
-
-## Next original product work
-
-After the first Living Sessions foundation qualifies:
-
-1. constellation visualization of lineages, mutations, echoes, and outcomes;
-2. two-parent Confluence sessions with complete inherited-dimension receipts;
-3. Echo Weaving into backend-independent cue/orchestration anchors;
-4. shareable seed capsules without personal history by default;
-5. Living Sessions for imported SBG, native-required SBGF, and research protocols;
-6. resume SBX-006 native rendering beneath the same session identity and receipt layer.
-
-## Creativity status
-
-The creativity research remains preserved in:
-
-- `docs/research/CREATIVITY_AUDIO_RESEARCH_FOUNDATIONS.md`
-- `docs/planning/CREATIVITY_PRODUCT_GAP_CHECK.md`
-
-Creativity implementation remains deferred. Living Sessions and SBaGenX interoperability establish the durable product foundation creativity will later use.
+1. Echo Weaving into backend-independent orchestration;
+2. shareable seed capsules without personal history by default;
+3. Living Sessions for imported SBG, native-required SBGF, and research protocols;
+4. SBX-006 native rendering beneath the same session identity and receipt layer;
+5. deferred creativity products after the durable session foundation is ready.
 
 ## Completion rule
 
-This priority is complete only when:
+The current priority remains healthy only while:
 
+- SBaGenX and PySbagen responsibilities stay distinct;
 - native integration cannot bypass compatibility truth or provenance;
 - SBGF and DRG remain first-class preserved artifacts;
-- backend choice is visible and reproducible;
+- backend choice stays visible and reproducible;
 - Python fallback remains supported;
-- session identity and memory work above either backend;
-- repeated use creates transparent new value without manipulative engagement;
-- local outcome history remains optional, inspectable, and non-medical;
-- full tests and package builds pass before merge;
-- remaining visual, confluence, echo-weaving, capsule, cross-product, and native-render work is delivered or handed off explicitly.
+- memory and navigation work above either backend;
+- local outcomes remain optional, inspectable, and non-medical;
+- repeated use creates transparent value without manipulative engagement;
+- the Cycloside permission gate is honored;
+- each new train builds product rather than auditing prior audits;
+- full tests and package builds pass before merge.

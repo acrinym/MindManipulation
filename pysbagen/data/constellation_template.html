@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #090b12;
+  --panel: #111625;
+  --panel2: #171e31;
+  --text: #eef2ff;
+  --muted: #9ba8c7;
+  --line: #435174;
+  --focus: #f4d27a;
+  --warn: #f6a96b;
+  --root: #9cc5ff;
+  --return: #b7a5ff;
+  --branch: #7ee0d6;
+  --contrast: #ff9eab;
+  --wander: #f3c56b;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, sans-serif; }
+header { padding: 18px 22px; border-bottom: 1px solid #232c43; background: #0c101b; }
+header h1 { margin: 0 0 4px; font-size: 22px; }
+header p { margin: 0; color: var(--muted); }
+.toolbar { display: grid; grid-template-columns: minmax(180px, 1fr) repeat(3, minmax(120px, 180px)); gap: 10px; padding: 12px 18px; background: var(--panel); border-bottom: 1px solid #232c43; }
+input, select, button { width: 100%; border: 1px solid #35415f; border-radius: 7px; background: #0c1120; color: var(--text); padding: 9px 10px; }
+button { cursor: pointer; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 360px; height: calc(100vh - 132px); }
+.stage { overflow: auto; position: relative; }
+svg { min-width: 100%; min-height: 100%; }
+.edge { stroke: var(--line); stroke-width: 2; fill: none; opacity: .8; }
+.edge.experimental { stroke-dasharray: 8 6; }
+.node { cursor: pointer; }
+.node rect { fill: var(--panel2); stroke-width: 2; rx: 10; }
+.node[data-mode="root"] rect { stroke: var(--root); }
+.node[data-mode="return"] rect { stroke: var(--return); }
+.node[data-mode="branch"] rect { stroke: var(--branch); }
+.node[data-mode="contrast"] rect { stroke: var(--contrast); }
+.node[data-mode="wander"] rect { stroke: var(--wander); }
+.node.focus rect, .node.selected rect { stroke: var(--focus); stroke-width: 4; }
+.node.dim { opacity: .15; }
+.node text { fill: var(--text); pointer-events: none; }
+.node .sub { fill: var(--muted); font-size: 11px; }
+aside { border-left: 1px solid #232c43; background: var(--panel); overflow: auto; padding: 16px; }
+aside h2 { margin-top: 0; }
+.meta { display: grid; grid-template-columns: 110px 1fr; gap: 6px 10px; }
+.meta dt { color: var(--muted); }
+.meta dd { margin: 0; overflow-wrap: anywhere; }
+.card { background: var(--panel2); border: 1px solid #2c3651; border-radius: 8px; padding: 10px; margin: 10px 0; }
+.badge { display: inline-block; border: 1px solid #4b5a7d; border-radius: 999px; padding: 2px 7px; margin: 2px; color: var(--muted); }
+.warnings { color: var(--warn); }
+footer { color: var(--muted); font-size: 12px; margin-top: 18px; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 900px) {
+  .toolbar { grid-template-columns: 1fr 1fr; }
+  main { grid-template-columns: 1fr; height: auto; }
+  .stage { height: 68vh; }
+  aside { border-left: 0; border-top: 1px solid #232c43; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>__TITLE__</h1>
+  <p><span id="summary"></span> · snapshot <code>__GRAPH_SHORT__</code> · local/offline</p>
+</header>
+<section class="toolbar" aria-label="Constellation filters">
+  <input id="search" type="search" placeholder="Search title, motif, session, mutation, event">
+  <select id="lineage"><option value="">All lineages</option></select>
+  <select id="mode"><option value="">All modes</option><option>root</option><option>return</option><option>branch</option><option>contrast</option><option>wander</option></select>
+  <select id="status"><option value="">All states</option><option>planned</option><option>active</option><option>completed</option></select>
+</section>
+<main>
+  <section class="stage" aria-label="Session lineage graph">
+    <svg id="graph" role="img" aria-label="Living Session constellation"></svg>
+  </section>
+  <aside id="detail">
+    <h2>Select a session</h2>
+    <p>Click a node to inspect its exact recipe identity, ancestry, disclosed mutations, echoes, outcome, backend policy, and provenance.</p>
+    <div class="warnings" id="warnings"></div>
+    <footer>This file contains a selected local archive snapshot. Notes redacted: __REDACTED__.</footer>
+  </aside>
+</main>
+<script id="constellation-data" type="application/json">__DATA_JSON__</script>
+<script>
+const data = JSON.parse(document.getElementById("constellation-data").textContent);
+const svg = document.getElementById("graph");
+const detail = document.getElementById("detail");
+const search = document.getElementById("search");
+const lineage = document.getElementById("lineage");
+const mode = document.getElementById("mode");
+const status = document.getElementById("status");
+const byId = new Map(data.nodes.map(n => [n.session_id, n]));
+const focusId = data.focus_session_id || "";
+const nodeEls = new Map();
+const edgeEls = [];
+const ns = "http://www.w3.org/2000/svg";
+
+document.getElementById("summary").textContent =
+  `${data.summary.session_count} sessions · ${data.summary.lineage_count} lineages · ${data.summary.echo_count} echoes`;
+
+for (const item of data.lineages) {
+  const option = document.createElement("option");
+  option.value = item.lineage_id;
+  option.textContent = `${item.root_title || item.lineage_id} (${item.session_count})`;
+  lineage.appendChild(option);
+}
+
+const maxX = Math.max(900, ...data.nodes.map(n => n.x + 300));
+const maxY = Math.max(600, ...data.nodes.map(n => n.y + 180));
+svg.setAttribute("viewBox", `0 0 ${maxX} ${maxY}`);
+svg.setAttribute("width", maxX);
+svg.setAttribute("height", maxY);
+
+for (const edge of data.edges) {
+  const source = byId.get(edge.source_session_id);
+  const target = byId.get(edge.target_session_id);
+  if (!source || !target) continue;
+  const path = document.createElementNS(ns, "path");
+  const sx = source.x + 220, sy = source.y + 44;
+  const tx = target.x, ty = target.y + 44;
+  const mid = (sx + tx) / 2;
+  path.setAttribute("d", `M ${sx} ${sy} C ${mid} ${sy}, ${mid} ${ty}, ${tx} ${ty}`);
+  path.setAttribute("class", `edge ${edge.experimental ? "experimental" : ""}`);
+  path.dataset.source = edge.source_session_id;
+  path.dataset.target = edge.target_session_id;
+  path.dataset.label = edge.label;
+  svg.appendChild(path);
+  edgeEls.push(path);
+}
+
+for (const node of data.nodes) {
+  const group = document.createElementNS(ns, "g");
+  group.setAttribute("class", `node ${node.session_id === focusId ? "focus" : ""}`);
+  group.setAttribute("transform", `translate(${node.x},${node.y})`);
+  group.dataset.id = node.session_id;
+  group.dataset.mode = node.mode;
+  const rect = document.createElementNS(ns, "rect");
+  rect.setAttribute("width", "220");
+  rect.setAttribute("height", "88");
+  const titleText = document.createElementNS(ns, "text");
+  titleText.setAttribute("x", "12");
+  titleText.setAttribute("y", "25");
+  titleText.textContent = node.title;
+  const metaText = document.createElementNS(ns, "text");
+  metaText.setAttribute("x", "12");
+  metaText.setAttribute("y", "47");
+  metaText.setAttribute("class", "sub");
+  metaText.textContent = `g${node.generation} · ${node.mode} · ${node.status}`;
+  const countText = document.createElementNS(ns, "text");
+  countText.setAttribute("x", "12");
+  countText.setAttribute("y", "68");
+  countText.setAttribute("class", "sub");
+  countText.textContent = `${node.echo_count} echoes · ${node.render_count} renders${node.rating ? ` · ${node.rating}/5` : ""}`;
+  group.append(rect, titleText, metaText, countText);
+  group.addEventListener("click", () => selectNode(node.session_id));
+  svg.appendChild(group);
+  nodeEls.set(node.session_id, group);
+}
+
+function searchable(node) {
+  return JSON.stringify({
+    title: node.title,
+    motif: node.motif,
+    id: node.session_id,
+    lineage: node.lineage_id,
+    mutations: node.mutations,
+    events: node.events,
+    tags: node.outcome?.tags || []
+  }).toLowerCase();
+}
+
+function applyFilters() {
+  const q = search.value.trim().toLowerCase();
+  for (const node of data.nodes) {
+    const visible =
+      (!lineage.value || node.lineage_id === lineage.value) &&
+      (!mode.value || node.mode === mode.value) &&
+      (!status.value || node.status === status.value) &&
+      (!q || searchable(node).includes(q));
+    nodeEls.get(node.session_id).style.display = visible ? "" : "none";
+    node._visible = visible;
+  }
+  for (const edgeEl of edgeEls) {
+    edgeEl.style.display =
+      byId.get(edgeEl.dataset.source)._visible && byId.get(edgeEl.dataset.target)._visible ? "" : "none";
+  }
+}
+search.addEventListener("input", applyFilters);
+lineage.addEventListener("change", applyFilters);
+mode.addEventListener("change", applyFilters);
+status.addEventListener("change", applyFilters);
+
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function pretty(value) { return esc(typeof value === "string" ? value : JSON.stringify(value)); }
+
+function selectNode(id) {
+  const node = byId.get(id);
+  for (const [nodeId, el] of nodeEls) {
+    el.classList.toggle("selected", nodeId === id);
+    el.classList.toggle("dim", nodeId !== id && nodeId !== node.parent_session_id && !data.edges.some(e => e.source_session_id === id && e.target_session_id === nodeId));
+  }
+  const mutations = node.mutations.length
+    ? node.mutations.map(m => `<div class="card"><strong>${esc(m.key)}</strong><br>${pretty(m.before)} → ${pretty(m.after)}<br><small>${esc(m.reason)}</small></div>`).join("")
+    : "<p>No recipe mutation; this is an exact root/return relationship.</p>";
+  const events = node.events.length
+    ? node.events.map(e => `<div class="card"><strong>${esc(e.kind)}</strong>${e.position_seconds == null ? "" : ` @ ${e.position_seconds}s`}<br>${esc(e.label)}${Object.keys(e.payload || {}).length ? `<pre>${esc(JSON.stringify(e.payload, null, 2))}</pre>` : ""}</div>`).join("")
+    : "<p>No events recorded.</p>";
+  const outcome = node.outcome
+    ? `<div class="card"><strong>${node.outcome.rating}/5</strong> · ${esc(node.outcome.comfort)} · repeat ${node.outcome.would_repeat ? "yes" : "no"}<br>${esc(node.outcome.note || "")}<br>${(node.outcome.tags || []).map(t => `<span class="badge">${esc(t)}</span>`).join("")}</div>`
+    : "<p>No outcome recorded.</p>";
+  detail.innerHTML = `
+    <h2>${esc(node.memory_phrase)}</h2>
+    <dl class="meta">
+      <dt>Session</dt><dd><code>${esc(node.session_id)}</code></dd>
+      <dt>Lineage</dt><dd><code>${esc(node.lineage_id)}</code></dd>
+      <dt>Parent</dt><dd>${node.parent_session_id ? `<code>${esc(node.parent_session_id)}</code>` : "root"}</dd>
+      <dt>Generation</dt><dd>${node.generation}</dd>
+      <dt>Mode</dt><dd>${esc(node.mode)}${node.experimental ? " · experimental" : ""}</dd>
+      <dt>Status</dt><dd>${esc(node.status)}</dd>
+      <dt>Backend</dt><dd>${esc(node.backend_policy)}</dd>
+      <dt>Recipe</dt><dd><code>${esc(node.recipe_sha256)}</code></dd>
+      <dt>Created</dt><dd>${esc(node.created_at)}</dd>
+    </dl>
+    <h3>Journey</h3>
+    <div class="card">${Object.entries(node.request_summary).map(([k,v]) => `<span class="badge">${esc(k)}=${pretty(v)}</span>`).join("")}</div>
+    <p>${esc(node.rationale)}</p>
+    <h3>Disclosed changes</h3>${mutations}
+    <h3>Echoes and events</h3>${events}
+    <h3>Outcome</h3>${outcome}
+    <button id="copy-id">Copy session ID</button>
+    ${data.integrity_warnings.length ? `<div class="warnings"><h3>Snapshot warnings</h3><ul>${data.integrity_warnings.map(w => `<li>${esc(w)}</li>`).join("")}</ul></div>` : ""}
+    <footer>Snapshot hash: <code>${data.graph_sha256}</code><br>Notes redacted: ${data.privacy.notes_redacted}.</footer>`;
+  document.getElementById("copy-id").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(node.session_id); }
+    catch (_) { /* clipboard may be unavailable for file://; ID remains visible */ }
+  });
+}
+
+applyFilters();
+if (focusId && byId.has(focusId)) selectNode(focusId);
+else if (data.nodes.length) selectNode(data.nodes[0].session_id);
+
+if (data.integrity_warnings.length) {
+  document.getElementById("warnings").innerHTML =
+    `<h3>Snapshot warnings</h3><ul>${data.integrity_warnings.map(w => `<li>${esc(w)}</li>`).join("")}</ul>`;
+}
+</script>
+</body>
+</html>

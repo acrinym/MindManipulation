@@ -116,7 +116,7 @@ def test_constellation_exposes_identity_changes_memory_outcome_and_backend(tmp_p
     text = constellation_to_text(graph)
     assert root.title in text
     assert branch.mutations[0].key in text
-    assert "personal descriptive records" in text
+    assert "descriptive personal records" in text
 
 
 def test_constellation_html_is_self_contained_searchable_and_script_safe(tmp_path: Path):

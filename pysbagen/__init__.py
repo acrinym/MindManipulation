@@ -14,9 +14,12 @@ from .constellation import (
     ConstellationGraph,
     ConstellationNode,
     build_constellation,
+    write_constellation_json,
+)
+from .constellation_render import (
+    install_constellation_renderer,
     render_constellation_html,
     write_constellation_html,
-    write_constellation_json,
 )
 from .importers import ImportedArtifact, import_artifact, import_drg, import_sbg
 from .interoperability import EngineDiscrepancy, InteroperabilityReport, inspect_with_sbagenx
@@ -47,6 +50,7 @@ from .sbgf import import_sbgf
 from .sleep import SleepLayers, SleepRecipe, SleepRequest, build_sleep_recipe
 
 install_living_session_policy()
+install_constellation_renderer()
 
 __all__ = [
     "AffectSnapshot",

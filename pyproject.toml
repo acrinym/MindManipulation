@@ -48,4 +48,4 @@ testpaths = ["pysbagen/tests"]
 addopts = "-q"
 
 [tool.setuptools.package-data]
-pysbagen = ["data/*.json"]
+pysbagen = ["data/*.json", "data/*.html"]

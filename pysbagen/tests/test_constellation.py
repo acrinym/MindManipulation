@@ -132,25 +132,29 @@ def test_focus_session_restricts_to_its_lineage(tmp_path: Path):
 
 def test_html_is_self_contained_searchable_and_script_safe(tmp_path: Path):
     archive, root, _, _ = _archive_with_lineage(tmp_path)
+    hostile_label = "</script><script>alert('x')</script>"
     archive.append_event(
         root.session_id,
         kind="custom",
-        label="</script><script>alert('x')</script>",
+        label=hostile_label,
         payload={"note": "private"},
         created_at="2026-08-05T20:20:00+00:00",
     )
     graph = build_constellation(archive, focus_session_id=root.session_id)
 
-    rendered = render_constellation_html(graph, redact_notes=True)
+    private_rendered = render_constellation_html(graph, redact_notes=False)
+    redacted_rendered = render_constellation_html(graph, redact_notes=True)
 
-    assert "PySbagen Living Session Constellation" in rendered
-    assert 'id="search"' in rendered
-    assert 'id="lineage"' in rendered
-    assert root.session_id in rendered
-    assert "</script><script>alert" not in rendered
-    assert "[redacted]" in rendered
-    assert '"notes_redacted":true' in rendered
-    assert "https://" not in rendered
+    assert "PySbagen Living Session Constellation" in private_rendered
+    assert 'id="search"' in private_rendered
+    assert 'id="lineage"' in private_rendered
+    assert root.session_id in private_rendered
+    assert hostile_label not in private_rendered
+    assert "<\\/script><script>alert('x')<\\/script>" in private_rendered
+    assert "[redacted]" in redacted_rendered
+    assert hostile_label not in redacted_rendered
+    assert '"notes_redacted":true' in redacted_rendered
+    assert "https://" not in private_rendered
 
 
 def test_json_export_has_snapshot_identity_and_redaction(tmp_path: Path):

@@ -1,15 +1,16 @@
 # PySbagen Living Sessions — Constellation Train
 
 **Date:** August 5, 2026  
-**Status:** Implementation complete; qualification pending  
+**Status:** Complete and qualified  
 **Branch:** `agent/living-sessions-constellation-train-20260805`  
+**Pull request:** `#13` — Build offline Living Sessions constellation navigator  
 **Stack base:** PR `#12` / `agent/living-sessions-train-20260731`
 
 ## Mission
 
 Turn Living Sessions history into an offline navigation surface people can repeatedly use to understand, revisit, compare, and extend their personal session lineages.
 
-This is not a decorative graph export. A constellation must answer:
+This is not a decorative graph export. A constellation answers:
 
 - Where did this session come from?
 - What changed from its parent?
@@ -91,13 +92,13 @@ For each selected node expose:
 - support `--redact-notes` snapshots;
 - remove free-text rationale, affect notes, outcome notes, event labels/payloads, and user-audio paths in redacted mode;
 - preserve technical identity and topology;
-- prevent embedded archive text from terminating the JSON script block.
+- prevent embedded archive text from terminating the JSON script block in both private and redacted exports.
 
 ### LIV-011G — CLI and machine-readable format
 
 **Status:** complete
 
-Add `sbgpy-constellation` with:
+Delivered `sbgpy-constellation` with:
 
 - whole-atlas export;
 - lineage restriction;
@@ -110,7 +111,18 @@ Add `sbgpy-constellation` with:
 
 ### LIV-011H — Qualification and product guide
 
-**Status:** implementation complete; qualification pending
+**Status:** complete
+
+GitHub Actions Python qualification run `#66` passed final implementation head `7f4e9a5801ad98ec1c76d9518b6efe086d1ff719`:
+
+- Python 3.10 — passed;
+- Python 3.11 — passed;
+- Python 3.12 — passed;
+- Python 3.13 — passed;
+- complete repository result — **74 tests passed**;
+- source distribution — passed;
+- wheel build — passed;
+- wheel includes the constellation model, renderer, CLI, and offline HTML template.
 
 Coverage includes:
 
@@ -118,11 +130,16 @@ Coverage includes:
 - lineage focus;
 - deterministic layout;
 - echo, render, outcome, backend, and recipe provenance;
-- script-safe self-contained HTML;
+- private and redacted script-safe HTML;
 - redaction behavior;
 - orphan-parent warnings;
 - CLI JSON export;
 - source distribution and wheel inclusion.
+
+## Corrections made during qualification
+
+1. The initial embedded Python f-string renderer was syntactically invalid because browser template expressions could be parsed as Python. It was removed entirely and replaced with a clean model/facade plus packaged static HTML renderer.
+2. Script-termination coverage initially exercised only redacted exports. It was strengthened to prove that unredacted private exports preserve hostile text as escaped JSON without permitting script termination.
 
 ## Anti-drawer acceptance
 
@@ -138,6 +155,6 @@ It deliberately avoids:
 - dropping provenance for visual simplicity;
 - adding a Cycloside integration without explicit permission.
 
-## Next train after qualification
+## Next train
 
-**LIV-012 — Confluence Sessions** may combine two parent lineages with complete inherited-dimension receipts. It must not begin until Constellation qualification is complete and the current stack remains healthy.
+**LIV-012 — Confluence Sessions** may combine two parent lineages with complete inherited-dimension receipts. It has not started and must remain separate from PR `#13`.

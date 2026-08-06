@@ -9,6 +9,11 @@ import re
 from pathlib import Path
 
 from .api import render_sleep, write_audio
+from .constellation import (
+    build_constellation,
+    constellation_to_text,
+    write_constellation_html,
+)
 from .living_sessions import (
     AffectSnapshot,
     LivingSessionArchive,
@@ -82,6 +87,21 @@ def build_parser() -> argparse.ArgumentParser:
 
     atlas_parser = subparsers.add_parser("atlas", help="Summarize lineages, echoes, and descriptive local patterns")
     atlas_parser.add_argument("--json", action="store_true", dest="as_json")
+
+    constellation_parser = subparsers.add_parser(
+        "constellation",
+        help="Navigate session ancestry, changes, echoes, outcomes, backends, and provenance",
+    )
+    constellation_parser.add_argument("--lineage", help="Limit the snapshot to one lineage ID")
+    constellation_parser.add_argument("--focus", help="Select and center one session when the HTML opens")
+    constellation_parser.add_argument(
+        "--html",
+        nargs="?",
+        const="living-session-constellation.html",
+        metavar="PATH",
+        help="Write a self-contained offline HTML navigator (default filename when omitted)",
+    )
+    constellation_parser.add_argument("--json", action="store_true", dest="as_json")
     return parser
 
 
@@ -247,6 +267,40 @@ def main(argv: list[str] | None = None) -> int:
                 print(json.dumps(atlas, indent=2, sort_keys=True))
             else:
                 _print_atlas(atlas)
+            return 0
+
+        if args.command == "constellation":
+            html_export = None
+            if args.html:
+                html_path, graph = write_constellation_html(
+                    archive,
+                    args.html,
+                    lineage_id=args.lineage,
+                    focus_session_id=args.focus,
+                )
+                html_export = {
+                    "path": str(html_path),
+                    "sha256": _sha256_file(html_path),
+                    "snapshot_sha256": graph["snapshot_sha256"],
+                }
+            else:
+                graph = build_constellation(
+                    archive,
+                    lineage_id=args.lineage,
+                    focus_session_id=args.focus,
+                )
+            if args.as_json:
+                payload = (
+                    {"constellation": graph, "html_export": html_export}
+                    if html_export is not None
+                    else graph
+                )
+                print(json.dumps(payload, indent=2, sort_keys=True))
+            else:
+                print(constellation_to_text(graph))
+                if html_export is not None:
+                    print(f"Offline navigator: {html_export['path']}")
+                    print(f"HTML SHA-256: {html_export['sha256']}")
             return 0
     except (KeyError, OSError, RuntimeError, TypeError, ValueError, json.JSONDecodeError) as exc:
         raise SystemExit(f"sbgpy-session: {exc}") from exc

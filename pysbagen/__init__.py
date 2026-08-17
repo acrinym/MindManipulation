@@ -11,6 +11,20 @@ from .api import (
 from .compatibility import CompatibilityState, ImportReport, RenderDisposition
 from .importers import ImportedArtifact, import_artifact, import_drg, import_sbg
 from .interoperability import EngineDiscrepancy, InteroperabilityReport, inspect_with_sbagenx
+from .living_sessions import (
+    AffectSnapshot,
+    LivingSessionArchive,
+    LivingSessionPlan,
+    SessionEvent,
+    SessionMutation,
+    SessionOutcome,
+    StoredSession,
+    create_child_sleep_plan,
+    create_sleep_plan,
+    recommend_child_mode,
+    sleep_request_from_manifest,
+)
+from .living_session_policy import install_living_session_policy
 from .sbagenx_backend import BackendCapability, SBaGenXProbe, probe_sbagenx
 from .sbagenx_native import (
     NativeDiagnostic,
@@ -23,13 +37,18 @@ from .sbagenx_native import (
 from .sbgf import import_sbgf
 from .sleep import SleepLayers, SleepRecipe, SleepRequest, build_sleep_recipe
 
+install_living_session_policy()
+
 __all__ = [
+    "AffectSnapshot",
     "BackendCapability",
     "CompatibilityState",
     "EngineDiscrepancy",
     "ImportReport",
     "ImportedArtifact",
     "InteroperabilityReport",
+    "LivingSessionArchive",
+    "LivingSessionPlan",
     "NativeDiagnostic",
     "NativeValidationReport",
     "RenderDisposition",
@@ -37,11 +56,17 @@ __all__ = [
     "SBaGenXNative",
     "SBaGenXNativeError",
     "SBaGenXProbe",
+    "SessionEvent",
+    "SessionMutation",
+    "SessionOutcome",
     "SleepLayers",
     "SleepRecipe",
     "SleepRequest",
+    "StoredSession",
     "UnsupportedSBaGenXAPI",
     "build_sleep_recipe",
+    "create_child_sleep_plan",
+    "create_sleep_plan",
     "import_artifact",
     "import_drg",
     "import_sbg",
@@ -49,9 +74,11 @@ __all__ = [
     "inspect_artifact",
     "inspect_with_sbagenx",
     "probe_sbagenx",
+    "recommend_child_mode",
     "render_schedule",
     "render_sleep",
     "render_specs",
+    "sleep_request_from_manifest",
     "validate_sbagenx_source",
     "write_audio",
 ]

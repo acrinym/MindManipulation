@@ -1,74 +1,147 @@
 # PySbagen Current Product Priority
 
 **Date:** July 31, 2026  
-**Status:** Compatibility phase delivered; original-SBaGen workstation completion is the active next priority
-
-## Scope correction
-
-The I-Doser/SBaGen compatibility, preservation, inspection, and local-library train was successfully implemented and merged through:
-
-- `.beads/pysbagen_compatibility_preservation_train_2026_07_31.md`
-- PR `#9` — **Build the SBaGen and DRG compatibility product**
-- merge commit `0c95a67ca65db22d6441b123a5709bcaf929a064`
-- completion receipt `.beads/pysbagen_compatibility_preservation_train_2026_07_31_COMPLETION.md`
-
-That train completed the six priorities explicitly listed under the pain-point scout's **next compatibility train** section.
-
-It did **not** complete the separate workstation/product features recorded by the original SBaGen website and bundled TODO. The previous wording "compatibility priority delivered" was accurate only for that bounded phase, but it could be read as though the entire pain-point handoff had been delivered. This document corrects that interpretation.
+**Status:** Compatibility delivered; SBaGenX interoperability and PySbagen differentiation are the active priority
 
 ## Delivered compatibility foundation
 
-1. Honest SBG/DRG import reports and render dispositions.
-2. Complete DRG package preservation.
-3. Original-SBaGen semantic compatibility matrix.
-4. Timeline/source inspection before playback.
-5. Audio-source and listening-path qualification.
-6. Local-first provenance library.
+The I-Doser/SBaGen compatibility, preservation, inspection, qualification, and local-library train was merged through PR `#9` at `0c95a67ca65db22d6441b123a5709bcaf929a064`.
 
-These remain delivered and are the foundation for the next train.
+Delivered capabilities remain:
 
-## Active next priority: experimenter workstation
+1. honest SBG/DRG import reports and render dispositions;
+2. complete DRG package preservation;
+3. original-SBaGen semantic compatibility matrix;
+4. timeline/source inspection before playback;
+5. audio-source and listening-path qualification;
+6. local-first provenance library.
 
-The original SBaGen TODO gap is now mapped in:
+## Product-direction correction
 
-- `docs/planning/SBAGEN_ORIGINAL_TODO_GAP_MATRIX.md`
+A source-level review of `lm7137/SBaGenX` showed that the broad Python workstation plan would duplicate the active modern SBaGen lineage. SBaGenX already provides substantial native engine, `.sbg`/`.sbgf`, curve, mix-effect, live-control, multivoice, export, plotting, packaging, desktop, and Android work.
 
-The implementation plan is:
+Therefore:
+
+> PySbagen will not rebuild SBaGenX in Python.
+
+The broad workstation recreation train is retained only as a superseded record:
 
 - `.beads/pysbagen_experimenter_workstation_train_2026_07_31.md`
 
-Planned implementation branch:
+## Active priority
 
-- `agent/experimenter-workstation-train-20260731`
+Authoritative boundary:
 
-The active train covers the missing or partial product layer, including:
+- `docs/planning/SBAGENX_DIFFERENTIATION_AND_INTEROP_MATRIX.md`
 
-- a full editable schedule/project workstation;
-- independent channels and concurrent slides;
-- one-shot WAV/MP3/voice triggers;
-- reproducible random ranges and organic variation;
-- master volume and backend-neutral live transport;
-- keyboard scene crossfades;
-- session markers and user-event timing records;
-- generalized modulation, sweep curves, logarithmic fades, and broader colored noise;
-- `mixspin` and qualified experimental `mixbeat` processing;
-- Gnaural XML interchange and explicit WAV/AIFF output;
-- desktop file association and launch behavior;
-- explicit safety/hardware disposition for flashing, AudioStrobe, light-glasses, and obsolete LPT1 control.
+Active implementation train:
+
+- `.beads/pysbagen_sbagenx_interoperability_train_2026_07_31.md`
+
+Active branch and PR:
+
+- `agent/sbagenx-interoperability-train-20260731`
+- PR `#11` — **Differentiate PySbagen and begin SBaGenX interoperability**
+
+## Product responsibilities
+
+### SBaGenX
+
+Treat SBaGenX as the optional advanced native SBaGen engine for:
+
+- advanced SBG sequencing and DSP;
+- `.sbgf` curves and built-in programs;
+- native validation and future optional rendering;
+- mixspin/mixbeat/mixpulse/mixam;
+- native live parameter controls;
+- multiple voices, auxiliary tones, plotting, export, and frontend work.
+
+### PySbagen
+
+Keep PySbagen focused on:
+
+- SBG/SBGF/DRG inspection and preservation;
+- explicit compatibility-loss reports;
+- immutable protocol/package/session/output provenance;
+- local-first protocol library;
+- audio-source and listening-path qualification;
+- guided human-question products;
+- backend-independent session markers and event ledger;
+- outcome history and local preference learning;
+- evidence-position and claim provenance;
+- consent-aware research workflows;
+- one-shot cue/session orchestration only after checking upstream.
+
+SBaGenX remains optional. The Python renderer remains the portable fallback and current guided-product engine.
+
+## Implementation delivered on the active branch
+
+### Backend discovery and qualification
+
+- `pysbagen/sbagenx_backend.py`
+- `sbgpy-inspect backend`
+- executable/library discovery, candidate-versus-usable status, version/API identity, and symbol-backed capabilities
+
+### Typed native validation
+
+- `pysbagen/sbagenx_native.py`
+- exact API-47 ctypes signatures and diagnostic layout
+- fail-closed unknown-API, missing-symbol, malformed-pointer, and false-banner behavior
+- immutable source byte count and SHA-256
+- SBG/SBGF diagnostics with severity, code, location, range, and message
+- native library/version/API identity in deterministic reports
+
+### Combined compatibility truth
+
+- `pysbagen/interoperability.py`
+- `sbgpy-inspect backend --validate SOURCE`
+- PySbagen compatibility disposition and SBaGenX validity remain separate
+- exact-source identity comparison
+- explicit discrepancies for cross-engine acceptance/rejection and semantic differences
+- native success cannot erase PySbagen blockers, missing sources, unsupported states, or approximations
+
+### First-class SBGF preservation
+
+- `pysbagen/sbgf.py`
+- ordinary `sbgpy-inspect inspect SOURCE.sbgf`
+- immutable bytes/hash/encoding
+- parameters, solve directives, assignments, function inventory, media dependencies, and unknown-line preservation
+- local content-addressed library storage and offline verification
+- explicit `inspection-only` state and native-runtime requirement
+- no invented replacement curve language or fake SBG timeline
+
+## Next implementation bead
+
+**SBX-006 — Optional native render backend with receipts** is next.
+
+Native rendering remains deliberately disabled until the same change delivers:
+
+- exact typed context/render/writer bindings and cleanup;
+- representative parity/discrepancy fixtures;
+- explicit `python`, `sbagenx`, and capability-gated `auto` policy;
+- source/backend/API/configuration/output-hash receipts;
+- preserved Python fallback and guided-product behavior.
+
+The current implementation passed Python 3.10–3.13 qualification with **59 tests** and a successful source distribution/wheel build.
 
 ## Creativity status
 
-The creativity research and product gap remain valid and preserved in:
+The creativity research remains preserved in:
 
 - `docs/research/CREATIVITY_AUDIO_RESEARCH_FOUNDATIONS.md`
 - `docs/planning/CREATIVITY_PRODUCT_GAP_CHECK.md`
 
-However, **creativity implementation remains deferred**. The experimenter workstation train takes precedence and does not silently authorize the Creative Cycle train.
+**Creativity implementation remains deferred.** Interoperability and the differentiated session-intelligence foundation take precedence.
 
 ## Completion rule
 
-The full pain-point handoff must not be described as complete until every row in `SBAGEN_ORIGINAL_TODO_GAP_MATRIX.md` is either:
+This priority is complete only when:
 
-- delivered through a supported, tested product path;
-- retained as an explicit experimental lane with appropriate safeguards; or
-- intentionally excluded with a documented rationale.
+- native integration is version- and symbol-gated;
+- native validation and rendering cannot bypass compatibility truth or provenance;
+- SBGF and DRG remain first-class preserved artifacts;
+- backend choice is visible and reproducible;
+- Python fallback remains supported;
+- PySbagen-owned session/event/outcome features work above either backend;
+- full tests and package builds pass before merge;
+- verify-later rows are resolved rather than guessed.

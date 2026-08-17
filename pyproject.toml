@@ -30,6 +30,7 @@ sbgpy-inspect-gui = "inspect_gui:main"
 sbgpy-sleep = "pysbagen.sleep_cli:main"
 sbgpy-sleep-gui = "sleep_gui:main"
 sbgpy-session = "pysbagen.session_cli:main"
+sbgpy-confluence = "pysbagen.confluence_cli:main"
 
 [project.entry-points."pysbagen.generators"]
 # Third parties can register generator plugins in this group.
